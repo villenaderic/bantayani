@@ -1,0 +1,24 @@
+# Environment
+.env
+*.env.local
+
+# Node
+node_modules/
+apps/web/dist/
+apps/mobile/build/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+backend/.pytest_cache/
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+
+# Credentials
+*service-account*.json
+*.pem
+*.key
