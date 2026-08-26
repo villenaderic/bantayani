@@ -1,18 +1,33 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { demoFarm } from "../data/demoFarm";
+import { useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { demoDetections } from "../data/demoDetections";
+import { generateFarmDetail } from "../data/generateFarmDetail";
 import ImageryViewer from "../components/ImageryViewer";
 import RemoteSensingPanel from "../components/RemoteSensingPanel";
 import Timeline from "../components/Timeline";
 import VerificationControls from "../components/VerificationControls";
 import { SeverityBadge, StatusBadge } from "../components/StatusBadges";
-import type { DetectionStatus } from "../types/farm";
+import type { DetectionStatus, FarmDetail } from "../types/farm";
 
 export default function FarmDetailPage() {
-  const [farm, setFarm] = useState(demoFarm);
+  const { farmId } = useParams<{ farmId: string }>();
+  const summary = useMemo(() => demoDetections.find((d) => d.farmId === farmId), [farmId]);
+  const initialFarm = useMemo(() => (summary ? generateFarmDetail(summary) : null), [summary]);
+  const [farm, setFarm] = useState<FarmDetail | null>(initialFarm);
+
+  if (!farm) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-3 bg-slate-50">
+        <p className="text-sm text-slate-500">No farm record found for {farmId ?? "this ID"}.</p>
+        <Link to="/" className="text-sm font-medium text-agri-green hover:underline">
+          Back to map
+        </Link>
+      </div>
+    );
+  }
 
   function handleStatusChange(status: DetectionStatus) {
-    setFarm((prev) => ({ ...prev, detectionStatus: status }));
+    setFarm((prev) => (prev ? { ...prev, detectionStatus: status } : prev));
   }
 
   return (

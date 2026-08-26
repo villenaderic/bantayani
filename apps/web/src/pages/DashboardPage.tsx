@@ -1,40 +1,85 @@
-import { Link } from "react-router-dom";
-import { demoFarm } from "../data/demoFarm";
-import { SeverityBadge } from "../components/StatusBadges";
+import { useMemo, useState } from "react";
+import AppSidebar from "../components/AppSidebar";
+import StatsStrip from "../components/StatsStrip";
+import MapFilters from "../components/MapFilters";
+import DamageMap from "../components/DamageMap";
+import DetectionSummaryPanel from "../components/DetectionSummaryPanel";
+import { demoDetections } from "../data/demoDetections";
+import type { DetectionSummary } from "../types/detection";
+import type { MapFiltersState } from "../types/detection";
+
+const availableDamageTypes = Array.from(new Set(demoDetections.map((d) => d.damageType)));
+
+const initialFilters: MapFiltersState = {
+  damageTypes: new Set(availableDamageTypes),
+  severities: new Set(["critical", "high", "significant", "moderate", "low"]),
+  statuses: new Set([
+    "automated_detection",
+    "potential_damage",
+    "under_government_review",
+    "verified_damage",
+    "field_validated",
+    "rejected",
+  ]),
+};
 
 export default function DashboardPage() {
+  const [filters, setFilters] = useState<MapFiltersState>(initialFilters);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selected, setSelected] = useState<DetectionSummary | null>(null);
+
+  const filteredDetections = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return demoDetections.filter((d) => {
+      if (!filters.damageTypes.has(d.damageType)) return false;
+      if (!filters.severities.has(d.severity)) return false;
+      if (!filters.statuses.has(d.status)) return false;
+      if (!term) return true;
+      return (
+        d.farmId.toLowerCase().includes(term) ||
+        d.province.toLowerCase().includes(term) ||
+        d.municipality.toLowerCase().includes(term)
+      );
+    });
+  }, [filters, searchTerm]);
+
   return (
     <div className="flex h-screen flex-col">
       <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-3">
         <h1 className="text-lg font-semibold text-slate-800">BantayAni</h1>
         <span className="text-sm text-slate-500">Sample Region Office</span>
       </header>
-      <main className="flex flex-1 items-center justify-center bg-slate-50 p-6">
-        <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-400">
-            Recent detection, demo data
-          </p>
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm font-semibold text-slate-800">{demoFarm.farmId}</span>
-            <SeverityBadge severity={demoFarm.severity} />
-          </div>
-          <p className="mb-1 text-sm text-slate-600">
-            {demoFarm.damageType} in {demoFarm.municipality}, {demoFarm.province}
-          </p>
-          <p className="mb-4 text-xs text-slate-400">
-            {demoFarm.affectedAreaHectares} hectares affected, {demoFarm.confidence}% confidence
-          </p>
-          <Link
-            to={`/farms/${demoFarm.farmId}`}
-            className="inline-block rounded bg-agri-green px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-          >
-            Inspect farm
-          </Link>
+
+      <StatsStrip detections={demoDetections} />
+
+      <div className="flex flex-1 overflow-hidden">
+        <AppSidebar />
+
+        <div className="w-64 flex-shrink-0">
+          <MapFilters
+            filters={filters}
+            onChange={setFilters}
+            availableDamageTypes={availableDamageTypes}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+          />
         </div>
-      </main>
-      <p className="border-t border-slate-200 bg-white px-6 py-2 text-center text-xs text-slate-400">
-        The full interactive map with damage markers and clustering is planned for the next build pass.
-      </p>
+
+        <div className="relative flex-1">
+          <DamageMap
+            detections={filteredDetections}
+            selectedId={selected?.id ?? null}
+            onSelect={setSelected}
+          />
+          <div className="pointer-events-none absolute bottom-3 left-3 rounded bg-black/60 px-2 py-1 text-[11px] text-amber-300">
+            Demo data, simulated detections
+          </div>
+        </div>
+
+        <div className="w-80 flex-shrink-0">
+          <DetectionSummaryPanel detection={selected} onClose={() => setSelected(null)} />
+        </div>
+      </div>
     </div>
   );
 }
