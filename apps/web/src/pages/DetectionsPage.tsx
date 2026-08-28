@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AppShell from "../components/AppShell";
+import DataSourceBadge from "../components/DataSourceBadge";
 import { SeverityBadge, StatusBadge } from "../components/StatusBadges";
-import { demoDetections } from "../data/demoDetections";
+import { useBantayaniData } from "../hooks/useBantayaniData";
 import type { DetectionStatus } from "../types/farm";
 
 const TABS: { label: string; value: DetectionStatus | "all" }[] = [
@@ -16,15 +17,16 @@ const TABS: { label: string; value: DetectionStatus | "all" }[] = [
 ];
 
 export default function DetectionsPage() {
+  const { detections, isLoading, isLive } = useBantayaniData();
   const [activeTab, setActiveTab] = useState<DetectionStatus | "all">("all");
 
   const rows = useMemo(() => {
-    if (activeTab === "all") return demoDetections;
-    return demoDetections.filter((d) => d.status === activeTab);
-  }, [activeTab]);
+    if (activeTab === "all") return detections;
+    return detections.filter((d) => d.status === activeTab);
+  }, [detections, activeTab]);
 
   return (
-    <AppShell>
+    <AppShell headerRight={<DataSourceBadge isLive={isLive} isLoading={isLoading} />}>
       <div className="p-4">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-slate-800">Detections</h2>

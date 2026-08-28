@@ -1,24 +1,25 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AppShell from "../components/AppShell";
+import DataSourceBadge from "../components/DataSourceBadge";
 import { SeverityBadge } from "../components/StatusBadges";
-import { demoDisasters } from "../data/demoDisasters";
-import { demoDetections } from "../data/demoDetections";
+import { useBantayaniData } from "../hooks/useBantayaniData";
 
 export default function DisastersPage() {
+  const { detections, disasters, isLoading, isLive } = useBantayaniData();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const summaries = useMemo(() => {
-    return demoDisasters.map((disaster) => {
-      const related = demoDetections.filter((d) => d.disasterId === disaster.id);
+    return disasters.map((disaster) => {
+      const related = detections.filter((d) => d.disasterId === disaster.id);
       const affectedHectares = related.reduce((sum, d) => sum + d.affectedAreaHectares, 0);
       const affectedFarms = related.length;
       return { disaster, related, affectedHectares, affectedFarms };
     });
-  }, []);
+  }, [detections, disasters]);
 
   return (
-    <AppShell>
+    <AppShell headerRight={<DataSourceBadge isLive={isLive} isLoading={isLoading} />}>
       <div className="p-4">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-slate-800">Disasters</h2>

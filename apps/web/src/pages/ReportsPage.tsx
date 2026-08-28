@@ -1,22 +1,24 @@
 import { useMemo, useState } from "react";
 import AppShell from "../components/AppShell";
-import { demoDisasters } from "../data/demoDisasters";
-import { demoDetections } from "../data/demoDetections";
+import DataSourceBadge from "../components/DataSourceBadge";
+import { useBantayaniData } from "../hooks/useBantayaniData";
 import type { DetectionSummary } from "../types/detection";
 
 export default function ReportsPage() {
-  const [selectedDisasterId, setSelectedDisasterId] = useState<string>(demoDisasters[0]?.id ?? "");
+  const { detections, disasters, isLoading, isLive } = useBantayaniData();
+  const [selectedDisasterId, setSelectedDisasterId] = useState<string>("");
   const [generated, setGenerated] = useState(false);
 
-  const disaster = demoDisasters.find((d) => d.id === selectedDisasterId) ?? null;
+  const disaster = disasters.find((d) => d.id === selectedDisasterId) ?? disasters[0] ?? null;
+  const effectiveDisasterId = selectedDisasterId || disaster?.id || "";
 
   const report = useMemo(() => {
-    if (!disaster) return null;
-    return buildReport(disaster.id, demoDetections);
-  }, [disaster]);
+    if (!effectiveDisasterId) return null;
+    return buildReport(effectiveDisasterId, detections);
+  }, [effectiveDisasterId, detections]);
 
   return (
-    <AppShell>
+    <AppShell headerRight={<DataSourceBadge isLive={isLive} isLoading={isLoading} />}>
       <div className="p-4">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-slate-800">Reports</h2>
@@ -27,14 +29,14 @@ export default function ReportsPage() {
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-500">Disaster event</label>
             <select
-              value={selectedDisasterId}
+              value={effectiveDisasterId}
               onChange={(e) => {
                 setSelectedDisasterId(e.target.value);
                 setGenerated(false);
               }}
               className="rounded border border-slate-200 px-3 py-1.5 text-sm focus:border-agri-green focus:outline-none"
             >
-              {demoDisasters.map((d) => (
+              {disasters.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
                 </option>

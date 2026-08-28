@@ -15,7 +15,9 @@ BantayAni combines satellite imagery, remote sensing indicators, and geospatial 
 
 ## Project status
 
-This repository currently contains the foundation phase: project structure, database schema, authentication and role scaffolding, and the base map and dashboard shell. Satellite processing runs against a clearly labeled demo data layer until real imagery credentials are configured. See `docs/phases.md` for the full build sequence.
+The web dashboard now talks to a working FastAPI backend backed by a real database: farms, detections, and disasters are seeded and served over the API, and verifying, rejecting, or requesting field validation on a detection persists to the database. If the backend is not running or not reachable, the frontend automatically falls back to the same demo dataset bundled in the browser, so the interface stays fully usable on its own. A small badge in the header shows whether you are looking at live backend data or the offline demo fallback.
+
+Satellite imagery itself is still fully simulated. The database and API do not yet integrate a real imagery or Earth Engine provider, and farm boundaries are still stored as points rather than polygons. See `docs/phases.md` for the full build sequence.
 
 ## Repository layout
 
@@ -60,6 +62,19 @@ docker compose exec backend python -m app.core.seed_demo
 ```
 
 The web dashboard will be available at `http://localhost:5173` and the API at `http://localhost:8000`. Interactive API documentation is served at `http://localhost:8000/docs`.
+
+## Running the frontend on its own
+
+The web app can also run without Docker or the backend at all:
+
+```
+cd apps/web
+cp .env.example .env
+npm install
+npm run dev
+```
+
+With no backend reachable at `VITE_API_BASE_URL`, the interface automatically shows the bundled demo dataset and marks itself as such in the header.
 
 ## Demo mode
 

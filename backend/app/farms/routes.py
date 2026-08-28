@@ -1,27 +1,29 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.core.models import DamageDetection, Farm
+from app.core.schemas import DetectionSummarySchema
+from app.core.serializers import to_detection_summary
 
 router = APIRouter()
 
 
-@router.get("")
-def list_farms():
-    """Return farms within the requested bounding box or administrative area."""
-    return {"farms": []}
+@router.get("", response_model=list[DetectionSummarySchema])
+def list_farms(db: Session = Depends(get_db)):
+    """Return every farm together with its most recent detection."""
+    detections = db.query(DamageDetection).all()
+    return [to_detection_summary(d) for d in detections]
 
 
-@router.get("/{farm_id}")
-def get_farm(farm_id: str):
-    """Return full detail for a single farm, including crop and geometry."""
-    return {"farm_id": farm_id}
-
-
-@router.get("/{farm_id}/imagery")
-def get_farm_imagery(farm_id: str):
-    """Return the imagery records associated with a farm."""
-    return {"farm_id": farm_id, "imagery": []}
-
-
-@router.get("/{farm_id}/timeline")
-def get_farm_timeline(farm_id: str):
-    """Return the chronological observation and detection timeline for a farm."""
-    return {"farm_id": farm_id, "timeline": []}
+@router.get("/{farm_code}", response_model=DetectionSummarySchema)
+def get_farm(farm_code: str, db: Session = Depends(get_db)):
+    detection = (
+        db.query(DamageDetection)
+        .join(Farm)
+        .filter(Farm.farm_code == farm_code)
+        .first()
+    )
+    if not detection:
+        raise HTTPException(status_code=404, detail="Farm not found")
+    return to_detection_summary(detection)

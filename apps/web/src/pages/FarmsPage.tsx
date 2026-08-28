@@ -1,19 +1,21 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AppShell from "../components/AppShell";
+import DataSourceBadge from "../components/DataSourceBadge";
 import { SeverityBadge, StatusBadge } from "../components/StatusBadges";
-import { demoDetections } from "../data/demoDetections";
+import { useBantayaniData } from "../hooks/useBantayaniData";
 
 type SortKey = "farmId" | "province" | "crop" | "areaHectares" | "affectedAreaHectares";
 
 export default function FarmsPage() {
+  const { detections, isLoading, isLive } = useBantayaniData();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("farmId");
   const [sortAsc, setSortAsc] = useState(true);
 
   const rows = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    const filtered = demoDetections.filter((d) => {
+    const filtered = detections.filter((d) => {
       if (!term) return true;
       return (
         d.farmId.toLowerCase().includes(term) ||
@@ -32,7 +34,7 @@ export default function FarmsPage() {
       }
       return String(aValue).localeCompare(String(bValue)) * direction;
     });
-  }, [searchTerm, sortKey, sortAsc]);
+  }, [detections, searchTerm, sortKey, sortAsc]);
 
   function toggleSort(key: SortKey) {
     if (key === sortKey) {
@@ -44,7 +46,7 @@ export default function FarmsPage() {
   }
 
   return (
-    <AppShell>
+    <AppShell headerRight={<DataSourceBadge isLive={isLive} isLoading={isLoading} />}>
       <div className="p-4">
         <div className="mb-4 flex items-center justify-between">
           <div>

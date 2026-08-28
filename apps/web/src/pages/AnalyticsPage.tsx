@@ -13,7 +13,8 @@ import {
   YAxis,
 } from "recharts";
 import AppShell from "../components/AppShell";
-import { demoDetections } from "../data/demoDetections";
+import DataSourceBadge from "../components/DataSourceBadge";
+import { useBantayaniData } from "../hooks/useBantayaniData";
 
 const SEVERITY_COLOR: Record<string, string> = {
   critical: "#DC2626",
@@ -33,13 +34,14 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function AnalyticsPage() {
-  const byProvince = useMemo(() => aggregateByKey(demoDetections, "province"), []);
-  const byCrop = useMemo(() => aggregateByKey(demoDetections, "crop"), []);
-  const bySeverity = useMemo(() => countByKey(demoDetections, "severity"), []);
-  const byStatus = useMemo(() => countByKey(demoDetections, "status"), []);
+  const { detections, isLoading, isLive } = useBantayaniData();
+  const byProvince = useMemo(() => aggregateByKey(detections, "province"), [detections]);
+  const byCrop = useMemo(() => aggregateByKey(detections, "crop"), [detections]);
+  const bySeverity = useMemo(() => countByKey(detections, "severity"), [detections]);
+  const byStatus = useMemo(() => countByKey(detections, "status"), [detections]);
 
   return (
-    <AppShell>
+    <AppShell headerRight={<DataSourceBadge isLive={isLive} isLoading={isLoading} />}>
       <div className="p-4">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-slate-800">Analytics</h2>

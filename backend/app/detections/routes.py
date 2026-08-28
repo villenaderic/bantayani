@@ -1,30 +1,53 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.core.models import DamageDetection
+from app.core.schemas import DetectionSummarySchema
+from app.core.serializers import to_detection_summary
 
 router = APIRouter()
 
 
-@router.get("")
-def list_detections():
-    """Return damage detections, filterable by severity, status, crop, and area."""
-    return {"detections": []}
+@router.get("", response_model=list[DetectionSummarySchema])
+def list_detections(status: str | None = None, severity: str | None = None, db: Session = Depends(get_db)):
+    """Return damage detections, optionally filtered by status or severity."""
+    query = db.query(DamageDetection)
+    if status:
+        query = query.filter(DamageDetection.status == status)
+    if severity:
+        query = query.filter(DamageDetection.severity == severity)
+    return [to_detection_summary(d) for d in query.all()]
 
 
-@router.get("/{detection_id}")
-def get_detection(detection_id: str):
-    return {"detection_id": detection_id}
+@router.get("/{detection_id}", response_model=DetectionSummarySchema)
+def get_detection(detection_id: str, db: Session = Depends(get_db)):
+    detection = db.query(DamageDetection).filter(DamageDetection.id == detection_id).first()
+    if not detection:
+        raise HTTPException(status_code=404, detail="Detection not found")
+    return to_detection_summary(detection)
 
 
-@router.post("/{detection_id}/verify")
-def verify_detection(detection_id: str):
-    """Mark a detection as verified by an authorized government reviewer."""
-    return {"detection_id": detection_id, "status": "verified_damage"}
+def _update_status(detection_id: str, status: str, db: Session) -> DetectionSummarySchema:
+    detection = db.query(DamageDetection).filter(DamageDetection.id == detection_id).first()
+    if not detection:
+        raise HTTPException(status_code=404, detail="Detection not found")
+    detection.status = status
+    db.commit()
+    db.refresh(detection)
+    return to_detection_summary(detection)
 
 
-@router.post("/{detection_id}/reject")
-def reject_detection(detection_id: str):
-    return {"detection_id": detection_id, "status": "rejected"}
+@router.post("/{detection_id}/verify", response_model=DetectionSummarySchema)
+def verify_detection(detection_id: str, db: Session = Depends(get_db)):
+    return _update_status(detection_id, "verified_damage", db)
 
 
-@router.post("/{detection_id}/field-validation")
-def field_validate_detection(detection_id: str):
-    return {"detection_id": detection_id, "status": "field_validated"}
+@router.post("/{detection_id}/reject", response_model=DetectionSummarySchema)
+def reject_detection(detection_id: str, db: Session = Depends(get_db)):
+    return _update_status(detection_id, "rejected", db)
+
+
+@router.post("/{detection_id}/field-validation", response_model=DetectionSummarySchema)
+def field_validate_detection(detection_id: str, db: Session = Depends(get_db)):
+    return _update_status(detection_id, "field_validated", db)

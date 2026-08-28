@@ -1,19 +1,25 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { demoDetections } from "../data/demoDetections";
+import { useBantayaniData } from "../hooks/useBantayaniData";
 import { generateFarmDetail } from "../data/generateFarmDetail";
 import ImageryViewer from "../components/ImageryViewer";
 import RemoteSensingPanel from "../components/RemoteSensingPanel";
 import Timeline from "../components/Timeline";
 import VerificationControls from "../components/VerificationControls";
 import { SeverityBadge, StatusBadge } from "../components/StatusBadges";
+import { verifyDetection, rejectDetection, fieldValidateDetection } from "../lib/api";
 import type { DetectionStatus, FarmDetail } from "../types/farm";
 
 export default function FarmDetailPage() {
   const { farmId } = useParams<{ farmId: string }>();
-  const summary = useMemo(() => demoDetections.find((d) => d.farmId === farmId), [farmId]);
+  const { detections, isLive } = useBantayaniData();
+  const summary = useMemo(() => detections.find((d) => d.farmId === farmId), [detections, farmId]);
   const initialFarm = useMemo(() => (summary ? generateFarmDetail(summary) : null), [summary]);
   const [farm, setFarm] = useState<FarmDetail | null>(initialFarm);
+
+  if (initialFarm && farm?.farmId !== initialFarm.farmId) {
+    setFarm(initialFarm);
+  }
 
   if (!farm) {
     return (
@@ -26,8 +32,20 @@ export default function FarmDetailPage() {
     );
   }
 
-  function handleStatusChange(status: DetectionStatus) {
+  async function handleStatusChange(status: DetectionStatus) {
     setFarm((prev) => (prev ? { ...prev, detectionStatus: status } : prev));
+
+    if (!isLive || !summary) return;
+
+    try {
+      if (status === "verified_damage") await verifyDetection(summary.id);
+      else if (status === "rejected") await rejectDetection(summary.id);
+      else if (status === "field_validated") await fieldValidateDetection(summary.id);
+    } catch {
+      // The backend call failed after the local update already applied.
+      // The status change still reflects in this session; it will not
+      // persist server side until connectivity to the backend is restored.
+    }
   }
 
   return (

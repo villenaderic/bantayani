@@ -4,33 +4,41 @@ import StatsStrip from "../components/StatsStrip";
 import MapFilters from "../components/MapFilters";
 import DamageMap from "../components/DamageMap";
 import DetectionSummaryPanel from "../components/DetectionSummaryPanel";
-import { demoDetections } from "../data/demoDetections";
+import DataSourceBadge from "../components/DataSourceBadge";
+import { useBantayaniData } from "../hooks/useBantayaniData";
 import type { DetectionSummary, MapFiltersState } from "../types/detection";
 
-const availableDamageTypes = Array.from(new Set(demoDetections.map((d) => d.damageType)));
-
-const initialFilters: MapFiltersState = {
-  damageTypes: new Set(availableDamageTypes),
-  severities: new Set(["critical", "high", "significant", "moderate", "low"]),
-  statuses: new Set([
-    "automated_detection",
-    "potential_damage",
-    "under_government_review",
-    "verified_damage",
-    "field_validated",
-    "rejected",
-  ]),
-};
+const ALL_SEVERITIES = ["critical", "high", "significant", "moderate", "low"] as const;
+const ALL_STATUSES = [
+  "automated_detection",
+  "potential_damage",
+  "under_government_review",
+  "verified_damage",
+  "field_validated",
+  "rejected",
+] as const;
 
 export default function DashboardPage() {
-  const [filters, setFilters] = useState<MapFiltersState>(initialFilters);
+  const { detections, isLoading, isLive } = useBantayaniData();
+  const availableDamageTypes = useMemo(
+    () => Array.from(new Set(detections.map((d) => d.damageType))),
+    [detections]
+  );
+
+  const [filters, setFilters] = useState<MapFiltersState>({
+    damageTypes: new Set(),
+    severities: new Set(ALL_SEVERITIES),
+    statuses: new Set(ALL_STATUSES),
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [selected, setSelected] = useState<DetectionSummary | null>(null);
 
+  const effectiveDamageTypes = filters.damageTypes.size > 0 ? filters.damageTypes : new Set(availableDamageTypes);
+
   const filteredDetections = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    return demoDetections.filter((d) => {
-      if (!filters.damageTypes.has(d.damageType)) return false;
+    return detections.filter((d) => {
+      if (!effectiveDamageTypes.has(d.damageType)) return false;
       if (!filters.severities.has(d.severity)) return false;
       if (!filters.statuses.has(d.status)) return false;
       if (!term) return true;
@@ -40,16 +48,16 @@ export default function DashboardPage() {
         d.municipality.toLowerCase().includes(term)
       );
     });
-  }, [filters, searchTerm]);
+  }, [detections, effectiveDamageTypes, filters.severities, filters.statuses, searchTerm]);
 
   return (
-    <AppShell>
+    <AppShell headerRight={<DataSourceBadge isLive={isLive} isLoading={isLoading} />}>
       <div className="flex h-full flex-col">
-        <StatsStrip detections={demoDetections} />
+        <StatsStrip detections={detections} />
         <div className="flex flex-1 overflow-hidden">
           <div className="w-64 flex-shrink-0">
             <MapFilters
-              filters={filters}
+              filters={{ ...filters, damageTypes: effectiveDamageTypes }}
               onChange={setFilters}
               availableDamageTypes={availableDamageTypes}
               searchTerm={searchTerm}
@@ -63,9 +71,11 @@ export default function DashboardPage() {
               selectedId={selected?.id ?? null}
               onSelect={setSelected}
             />
-            <div className="pointer-events-none absolute bottom-3 left-3 rounded bg-black/60 px-2 py-1 text-[11px] text-amber-300">
-              Demo data, simulated detections
-            </div>
+            {!isLive && (
+              <div className="pointer-events-none absolute bottom-3 left-3 rounded bg-black/60 px-2 py-1 text-[11px] text-amber-300">
+                Demo data, simulated detections
+              </div>
+            )}
           </div>
 
           <div className="w-80 flex-shrink-0">
