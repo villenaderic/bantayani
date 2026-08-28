@@ -1,12 +1,11 @@
 import { useMemo, useState } from "react";
-import AppSidebar from "../components/AppSidebar";
+import AppShell from "../components/AppShell";
 import StatsStrip from "../components/StatsStrip";
 import MapFilters from "../components/MapFilters";
 import DamageMap from "../components/DamageMap";
 import DetectionSummaryPanel from "../components/DetectionSummaryPanel";
 import { demoDetections } from "../data/demoDetections";
-import type { DetectionSummary } from "../types/detection";
-import type { MapFiltersState } from "../types/detection";
+import type { DetectionSummary, MapFiltersState } from "../types/detection";
 
 const availableDamageTypes = Array.from(new Set(demoDetections.map((d) => d.damageType)));
 
@@ -44,42 +43,36 @@ export default function DashboardPage() {
   }, [filters, searchTerm]);
 
   return (
-    <div className="flex h-screen flex-col">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-3">
-        <h1 className="text-lg font-semibold text-slate-800">BantayAni</h1>
-        <span className="text-sm text-slate-500">Sample Region Office</span>
-      </header>
+    <AppShell>
+      <div className="flex h-full flex-col">
+        <StatsStrip detections={demoDetections} />
+        <div className="flex flex-1 overflow-hidden">
+          <div className="w-64 flex-shrink-0">
+            <MapFilters
+              filters={filters}
+              onChange={setFilters}
+              availableDamageTypes={availableDamageTypes}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+            />
+          </div>
 
-      <StatsStrip detections={demoDetections} />
+          <div className="relative flex-1">
+            <DamageMap
+              detections={filteredDetections}
+              selectedId={selected?.id ?? null}
+              onSelect={setSelected}
+            />
+            <div className="pointer-events-none absolute bottom-3 left-3 rounded bg-black/60 px-2 py-1 text-[11px] text-amber-300">
+              Demo data, simulated detections
+            </div>
+          </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        <AppSidebar />
-
-        <div className="w-64 flex-shrink-0">
-          <MapFilters
-            filters={filters}
-            onChange={setFilters}
-            availableDamageTypes={availableDamageTypes}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-          />
-        </div>
-
-        <div className="relative flex-1">
-          <DamageMap
-            detections={filteredDetections}
-            selectedId={selected?.id ?? null}
-            onSelect={setSelected}
-          />
-          <div className="pointer-events-none absolute bottom-3 left-3 rounded bg-black/60 px-2 py-1 text-[11px] text-amber-300">
-            Demo data, simulated detections
+          <div className="w-80 flex-shrink-0">
+            <DetectionSummaryPanel detection={selected} onClose={() => setSelected(null)} />
           </div>
         </div>
-
-        <div className="w-80 flex-shrink-0">
-          <DetectionSummaryPanel detection={selected} onClose={() => setSelected(null)} />
-        </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
