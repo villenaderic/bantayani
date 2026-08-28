@@ -5,9 +5,9 @@ const NAV_ITEMS = [
   { label: "Live Map", to: "/" },
   { label: "Farms", to: "/farms" },
   { label: "Detections", to: "/detections" },
-  { label: "Disasters", to: null },
+  { label: "Disasters", to: "/disasters" },
   { label: "Analytics", to: "/analytics" },
-  { label: "Reports", to: null },
+  { label: "Reports", to: "/reports" },
   { label: "Settings", to: null },
 ];
 

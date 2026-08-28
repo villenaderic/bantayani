@@ -17,6 +17,7 @@ export interface DetectionSummary {
   affectedAreaHectares: number;
   areaHectares: number;
   detectionDate: string;
+  disasterId?: string;
 }
 
 export interface MapFiltersState {

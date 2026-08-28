@@ -18,6 +18,7 @@ export const demoDetections: DetectionSummary[] = [
     affectedAreaHectares: 2.74,
     areaHectares: 4.12,
     detectionDate: "2026-08-25",
+    disasterId: "DIS-0001",
   },
   {
     id: "DET-0002",
@@ -36,6 +37,7 @@ export const demoDetections: DetectionSummary[] = [
     affectedAreaHectares: 5.1,
     areaHectares: 5.8,
     detectionDate: "2026-08-25",
+    disasterId: "DIS-0001",
   },
   {
     id: "DET-0003",
@@ -54,6 +56,7 @@ export const demoDetections: DetectionSummary[] = [
     affectedAreaHectares: 1.2,
     areaHectares: 3.0,
     detectionDate: "2026-08-24",
+    disasterId: "DIS-0001",
   },
   {
     id: "DET-0004",
@@ -72,6 +75,7 @@ export const demoDetections: DetectionSummary[] = [
     affectedAreaHectares: 3.4,
     areaHectares: 6.1,
     detectionDate: "2026-08-25",
+    disasterId: "DIS-0001",
   },
   {
     id: "DET-0005",
@@ -90,6 +94,7 @@ export const demoDetections: DetectionSummary[] = [
     affectedAreaHectares: 0.6,
     areaHectares: 2.9,
     detectionDate: "2026-08-20",
+    disasterId: "DIS-0003",
   },
   {
     id: "DET-0006",
@@ -108,6 +113,7 @@ export const demoDetections: DetectionSummary[] = [
     affectedAreaHectares: 4.9,
     areaHectares: 5.2,
     detectionDate: "2026-08-22",
+    disasterId: "DIS-0001",
   },
   {
     id: "DET-0007",
@@ -126,6 +132,7 @@ export const demoDetections: DetectionSummary[] = [
     affectedAreaHectares: 2.1,
     areaHectares: 3.3,
     detectionDate: "2026-08-22",
+    disasterId: "DIS-0001",
   },
   {
     id: "DET-0008",
@@ -162,6 +169,7 @@ export const demoDetections: DetectionSummary[] = [
     affectedAreaHectares: 0.4,
     areaHectares: 3.6,
     detectionDate: "2026-08-15",
+    disasterId: "DIS-0003",
   },
   {
     id: "DET-0010",
@@ -180,6 +188,7 @@ export const demoDetections: DetectionSummary[] = [
     affectedAreaHectares: 2.9,
     areaHectares: 5.0,
     detectionDate: "2026-08-24",
+    disasterId: "DIS-0002",
   },
   {
     id: "DET-0011",
@@ -198,6 +207,7 @@ export const demoDetections: DetectionSummary[] = [
     affectedAreaHectares: 4.2,
     areaHectares: 4.9,
     detectionDate: "2026-08-25",
+    disasterId: "DIS-0002",
   },
   {
     id: "DET-0012",
@@ -216,5 +226,6 @@ export const demoDetections: DetectionSummary[] = [
     affectedAreaHectares: 1.5,
     areaHectares: 3.2,
     detectionDate: "2026-08-25",
+    disasterId: "DIS-0001",
   },
 ];
