@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const NAV_ITEMS = [
   { label: "Live Map", to: "/" },
@@ -18,6 +19,7 @@ interface AppShellProps {
 
 export default function AppShell({ children, headerRight }: AppShellProps) {
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   return (
     <div className="flex h-screen flex-col">
@@ -25,7 +27,24 @@ export default function AppShell({ children, headerRight }: AppShellProps) {
         <Link to="/" className="text-lg font-semibold text-slate-800">
           BantayAni
         </Link>
-        {headerRight ?? <span className="text-sm text-slate-500">Sample Region Office</span>}
+        <div className="flex items-center gap-3">
+          {headerRight}
+          {user ? (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-slate-600">{user.name}</span>
+              <span className="rounded bg-slate-100 px-2 py-0.5 text-xs capitalize text-slate-500">
+                {user.role.replace(/_/g, " ")}
+              </span>
+              <button onClick={logout} className="text-xs text-slate-400 hover:text-slate-600">
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <Link to="/login" className="text-sm font-medium text-agri-green hover:underline">
+              Sign in
+            </Link>
+          )}
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">

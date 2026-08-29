@@ -11,7 +11,45 @@ Run with: python -m app.core.seed_demo
 from datetime import date
 
 from app.core.database import Base, SessionLocal, engine
-from app.core.models import DamageDetection, DisasterEvent, Farm
+from app.core.models import DamageDetection, DisasterEvent, Farm, User
+from app.core.security import hash_password
+
+DEMO_PASSWORD = "bantayani-demo"
+
+USERS = [
+    {
+        "id": "USR-0001",
+        "name": "Sample National Administrator",
+        "email": "admin@bantayani.gov.ph",
+        "role": "national_administrator",
+        "agency": "Department of Agriculture",
+        "region": None,
+    },
+    {
+        "id": "USR-0002",
+        "name": "Sample Regional Officer",
+        "email": "regional@bantayani.gov.ph",
+        "role": "regional_officer",
+        "agency": "Department of Agriculture, Region II",
+        "region": "Region II, Cagayan Valley",
+    },
+    {
+        "id": "USR-0003",
+        "name": "Sample GIS Analyst",
+        "email": "gis@bantayani.gov.ph",
+        "role": "gis_analyst",
+        "agency": "Department of Agriculture",
+        "region": None,
+    },
+    {
+        "id": "USR-0004",
+        "name": "Sample Viewer",
+        "email": "viewer@bantayani.gov.ph",
+        "role": "viewer",
+        "agency": "Department of Agriculture",
+        "region": None,
+    },
+]
 
 DISASTERS = [
     {
@@ -78,6 +116,20 @@ def seed():
             print("Database already has data. Skipping seed.")
             return
 
+        for u in USERS:
+            db.add(
+                User(
+                    id=u["id"],
+                    name=u["name"],
+                    email=u["email"],
+                    password_hash=hash_password(DEMO_PASSWORD),
+                    role=u["role"],
+                    agency=u["agency"],
+                    region=u["region"],
+                    status="active",
+                )
+            )
+
         for d in DISASTERS:
             db.add(DisasterEvent(**d))
 
@@ -114,7 +166,8 @@ def seed():
             db.add(detection)
 
         db.commit()
-        print(f"Seeded {len(DISASTERS)} disaster events and {len(DETECTIONS)} detections.")
+        print(f"Seeded {len(USERS)} users, {len(DISASTERS)} disaster events, and {len(DETECTIONS)} detections.")
+        print(f"Demo login password for every seeded user: {DEMO_PASSWORD}")
     finally:
         db.close()
 

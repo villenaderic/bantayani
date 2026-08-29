@@ -22,6 +22,22 @@ def generate_uuid() -> str:
     return str(uuid.uuid4())
 
 
+class User(Base):
+    # Named app_users rather than users so it does not collide with the
+    # richer users table defined in backend/migrations/001_initial_schema.sql,
+    # which is the target schema once this backend moves onto PostgreSQL.
+    __tablename__ = "app_users"
+
+    id: Mapped[str] = mapped_column(String(50), primary_key=True, default=generate_uuid)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[str] = mapped_column(String(50), nullable=False)
+    agency: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    region: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="active")
+
+
 class DisasterEvent(Base):
     __tablename__ = "disaster_events"
 

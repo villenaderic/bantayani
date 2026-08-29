@@ -2,11 +2,22 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.models import DamageDetection
+from app.core.deps import require_roles
+from app.core.models import DamageDetection, User
 from app.core.schemas import DetectionSummarySchema
 from app.core.serializers import to_detection_summary
 
 router = APIRouter()
+
+# Every authenticated role except viewer may record a verification decision.
+REVIEWER_ROLES = (
+    "national_administrator",
+    "regional_officer",
+    "provincial_officer",
+    "municipal_agriculture_officer",
+    "gis_analyst",
+    "field_validator",
+)
 
 
 @router.get("", response_model=list[DetectionSummarySchema])
@@ -39,15 +50,27 @@ def _update_status(detection_id: str, status: str, db: Session) -> DetectionSumm
 
 
 @router.post("/{detection_id}/verify", response_model=DetectionSummarySchema)
-def verify_detection(detection_id: str, db: Session = Depends(get_db)):
+def verify_detection(
+    detection_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*REVIEWER_ROLES)),
+):
     return _update_status(detection_id, "verified_damage", db)
 
 
 @router.post("/{detection_id}/reject", response_model=DetectionSummarySchema)
-def reject_detection(detection_id: str, db: Session = Depends(get_db)):
+def reject_detection(
+    detection_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*REVIEWER_ROLES)),
+):
     return _update_status(detection_id, "rejected", db)
 
 
 @router.post("/{detection_id}/field-validation", response_model=DetectionSummarySchema)
-def field_validate_detection(detection_id: str, db: Session = Depends(get_db)):
+def field_validate_detection(
+    detection_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*REVIEWER_ROLES)),
+):
     return _update_status(detection_id, "field_validated", db)

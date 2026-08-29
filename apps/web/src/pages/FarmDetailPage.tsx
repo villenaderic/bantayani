@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useBantayaniData } from "../hooks/useBantayaniData";
+import { useAuth } from "../context/AuthContext";
 import { generateFarmDetail } from "../data/generateFarmDetail";
 import ImageryViewer from "../components/ImageryViewer";
 import RemoteSensingPanel from "../components/RemoteSensingPanel";
@@ -10,12 +11,16 @@ import { SeverityBadge, StatusBadge } from "../components/StatusBadges";
 import { verifyDetection, rejectDetection, fieldValidateDetection } from "../lib/api";
 import type { DetectionStatus, FarmDetail } from "../types/farm";
 
+const VIEWER_ROLE = "viewer";
+
 export default function FarmDetailPage() {
   const { farmId } = useParams<{ farmId: string }>();
   const { detections, isLive } = useBantayaniData();
+  const { user } = useAuth();
   const summary = useMemo(() => detections.find((d) => d.farmId === farmId), [detections, farmId]);
   const initialFarm = useMemo(() => (summary ? generateFarmDetail(summary) : null), [summary]);
   const [farm, setFarm] = useState<FarmDetail | null>(initialFarm);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   if (initialFarm && farm?.farmId !== initialFarm.farmId) {
     setFarm(initialFarm);
@@ -32,7 +37,16 @@ export default function FarmDetailPage() {
     );
   }
 
+  const disabledReason = !isLive
+    ? null
+    : !user
+    ? "Sign in with a government account to record a verification decision."
+    : user.role === VIEWER_ROLE
+    ? "Viewer accounts are read only and cannot record verification decisions."
+    : null;
+
   async function handleStatusChange(status: DetectionStatus) {
+    setActionError(null);
     setFarm((prev) => (prev ? { ...prev, detectionStatus: status } : prev));
 
     if (!isLive || !summary) return;
@@ -41,10 +55,10 @@ export default function FarmDetailPage() {
       if (status === "verified_damage") await verifyDetection(summary.id);
       else if (status === "rejected") await rejectDetection(summary.id);
       else if (status === "field_validated") await fieldValidateDetection(summary.id);
-    } catch {
-      // The backend call failed after the local update already applied.
-      // The status change still reflects in this session; it will not
-      // persist server side until connectivity to the backend is restored.
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "The decision was not saved to the backend."
+      );
     }
   }
 
@@ -92,7 +106,12 @@ export default function FarmDetailPage() {
 
         <div className="space-y-4">
           <RemoteSensingPanel farm={farm} />
-          <VerificationControls status={farm.detectionStatus} onStatusChange={handleStatusChange} />
+          <VerificationControls
+            status={farm.detectionStatus}
+            onStatusChange={handleStatusChange}
+            disabledReason={disabledReason}
+            errorMessage={actionError}
+          />
         </div>
       </main>
     </div>
