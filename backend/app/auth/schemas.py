@@ -15,6 +15,8 @@ class UserSchema(BaseModel):
     role: str
     agency: str | None = None
     region: str | None = None
+    province: str | None = None
+    municipality: str | None = None
 
 
 class TokenResponse(BaseModel):

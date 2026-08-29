@@ -12,6 +12,8 @@ export interface AuthUser {
   role: string;
   agency: string | null;
   region: string | null;
+  province: string | null;
+  municipality: string | null;
 }
 
 export interface LoginResponse {
@@ -51,11 +53,11 @@ function authHeaders(): HeadersInit {
 }
 
 export function fetchDetections(): Promise<DetectionSummary[]> {
-  return request<DetectionSummary[]>("/detections");
+  return request<DetectionSummary[]>("/detections", { headers: authHeaders() });
 }
 
 export function fetchDisasters(): Promise<DisasterEvent[]> {
-  return request<DisasterEvent[]>("/disasters");
+  return request<DisasterEvent[]>("/disasters", { headers: authHeaders() });
 }
 
 export function login(email: string, password: string): Promise<LoginResponse> {

@@ -35,6 +35,11 @@ export default function AppShell({ children, headerRight }: AppShellProps) {
               <span className="rounded bg-slate-100 px-2 py-0.5 text-xs capitalize text-slate-500">
                 {user.role.replace(/_/g, " ")}
               </span>
+              {(user.region || user.province || user.municipality) && (
+                <span className="text-xs text-slate-400">
+                  Scoped to {user.municipality ?? user.province ?? user.region}
+                </span>
+              )}
               <button onClick={logout} className="text-xs text-slate-400 hover:text-slate-600">
                 Sign out
               </button>

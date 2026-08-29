@@ -35,6 +35,8 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(50), nullable=False)
     agency: Mapped[str | None] = mapped_column(String(255), nullable=True)
     region: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    province: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    municipality: Mapped[str | None] = mapped_column(String(100), nullable=True)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="active")
 
 

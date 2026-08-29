@@ -24,6 +24,8 @@ USERS = [
         "role": "national_administrator",
         "agency": "Department of Agriculture",
         "region": None,
+        "province": None,
+        "municipality": None,
     },
     {
         "id": "USR-0002",
@@ -32,6 +34,8 @@ USERS = [
         "role": "regional_officer",
         "agency": "Department of Agriculture, Region II",
         "region": "Region II, Cagayan Valley",
+        "province": None,
+        "municipality": None,
     },
     {
         "id": "USR-0003",
@@ -40,6 +44,8 @@ USERS = [
         "role": "gis_analyst",
         "agency": "Department of Agriculture",
         "region": None,
+        "province": None,
+        "municipality": None,
     },
     {
         "id": "USR-0004",
@@ -48,6 +54,28 @@ USERS = [
         "role": "viewer",
         "agency": "Department of Agriculture",
         "region": None,
+        "province": None,
+        "municipality": None,
+    },
+    {
+        "id": "USR-0005",
+        "name": "Sample Provincial Officer",
+        "email": "provincial@bantayani.gov.ph",
+        "role": "provincial_officer",
+        "agency": "Provincial Agriculture Office, Isabela",
+        "region": None,
+        "province": "Isabela",
+        "municipality": None,
+    },
+    {
+        "id": "USR-0006",
+        "name": "Sample Municipal Agriculture Officer",
+        "email": "municipal@bantayani.gov.ph",
+        "role": "municipal_agriculture_officer",
+        "agency": "Municipal Agriculture Office, Aparri",
+        "region": None,
+        "province": None,
+        "municipality": "Aparri",
     },
 ]
 
@@ -126,6 +154,8 @@ def seed():
                     role=u["role"],
                     agency=u["agency"],
                     region=u["region"],
+                    province=u["province"],
+                    municipality=u["municipality"],
                     status="active",
                 )
             )

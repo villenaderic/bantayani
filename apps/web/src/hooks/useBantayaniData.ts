@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchDetections, fetchDisasters } from "../lib/api";
 import { demoDetections } from "../data/demoDetections";
 import { demoDisasters } from "../data/demoDisasters";
+import { useAuth } from "../context/AuthContext";
 import type { DetectionSummary } from "../types/detection";
 import type { DisasterEvent } from "../types/disaster";
 
@@ -13,12 +14,18 @@ interface BantayaniData {
 }
 
 export function useBantayaniData(): BantayaniData {
+  const { user, isCheckingSession } = useAuth();
   const [detections, setDetections] = useState<DetectionSummary[]>(demoDetections);
   const [disasters, setDisasters] = useState<DisasterEvent[]>(demoDisasters);
   const [isLoading, setIsLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
+    // Wait for the initial session check so an already logged in user's
+    // scoped view loads on the first request instead of an unscoped one
+    // that then gets replaced a moment later.
+    if (isCheckingSession) return;
+
     let cancelled = false;
 
     async function load() {
@@ -42,7 +49,10 @@ export function useBantayaniData(): BantayaniData {
     return () => {
       cancelled = true;
     };
-  }, []);
+    // Re-run whenever the signed in identity changes, since role based
+    // scoping on the backend depends on who is asking.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCheckingSession, user?.id]);
 
   return { detections, disasters, isLoading, isLive };
 }

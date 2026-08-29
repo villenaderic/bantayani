@@ -27,6 +27,29 @@ def get_current_user(
     return user
 
 
+def get_optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> User | None:
+    """Same as get_current_user but returns None instead of raising when
+    there is no token or the token is invalid. Used on read endpoints so
+    they stay browsable without signing in, while still applying role
+    based scoping when a valid session is present.
+    """
+    if credentials is None:
+        return None
+
+    payload = decode_access_token(credentials.credentials)
+    if payload is None:
+        return None
+
+    user = db.query(User).filter(User.id == payload.get("sub")).first()
+    if user is None or user.status != "active":
+        return None
+
+    return user
+
+
 def require_roles(*allowed_roles: str):
     """Dependency factory restricting an endpoint to specific roles.
 

@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import require_roles
+from app.core.deps import get_optional_user, require_roles
 from app.core.models import DamageDetection, User
 from app.core.schemas import DetectionSummarySchema
+from app.core.scoping import filter_by_scope
 from app.core.serializers import to_detection_summary
 
 router = APIRouter()
@@ -21,14 +22,20 @@ REVIEWER_ROLES = (
 
 
 @router.get("", response_model=list[DetectionSummarySchema])
-def list_detections(status: str | None = None, severity: str | None = None, db: Session = Depends(get_db)):
-    """Return damage detections, optionally filtered by status or severity."""
+def list_detections(
+    status: str | None = None,
+    severity: str | None = None,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+):
+    """Return damage detections the current user is permitted to see, optionally filtered by status or severity."""
     query = db.query(DamageDetection)
     if status:
         query = query.filter(DamageDetection.status == status)
     if severity:
         query = query.filter(DamageDetection.severity == severity)
-    return [to_detection_summary(d) for d in query.all()]
+    detections = filter_by_scope(query.all(), user)
+    return [to_detection_summary(d) for d in detections]
 
 
 @router.get("/{detection_id}", response_model=DetectionSummarySchema)
