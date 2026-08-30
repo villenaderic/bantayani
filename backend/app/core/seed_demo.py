@@ -12,7 +12,7 @@ from datetime import date
 
 from app.core.database import Base, SessionLocal, engine
 from app.core.geometry import generate_farm_boundary
-from app.core.models import DamageDetection, DisasterEvent, Farm, User
+from app.core.models import Alert, DamageDetection, DisasterEvent, Farm, User
 from app.core.security import hash_password
 
 DEMO_PASSWORD = "bantayani-demo"
@@ -197,11 +197,51 @@ def seed():
             )
             db.add(detection)
 
+            _create_alerts_for_detection(db, det_id, severity, status, region, province, municipality)
+
         db.commit()
-        print(f"Seeded {len(USERS)} users, {len(DISASTERS)} disaster events, and {len(DETECTIONS)} detections.")
+        alert_count = db.query(Alert).count()
+        print(
+            f"Seeded {len(USERS)} users, {len(DISASTERS)} disaster events, "
+            f"{len(DETECTIONS)} detections, and {alert_count} alerts."
+        )
         print(f"Demo login password for every seeded user: {DEMO_PASSWORD}")
     finally:
         db.close()
+
+
+def _create_alerts_for_detection(
+    db, detection_id: str, severity: str, status: str, region: str, province: str, municipality: str
+) -> None:
+    """Routes an alert to the national administrator for critical detections,
+    and to any seeded officer whose assigned region, province, or municipality
+    matches the farm, mirroring the automatic alert routing described in
+    section 17 of the project specification. Rejected detections and anything
+    below high severity do not generate an alert.
+    """
+    if status == "rejected" or severity not in ("high", "critical"):
+        return
+
+    alert_type = "critical_damage_detected" if severity == "critical" else "high_confidence_detection"
+
+    recipients: set[str] = set()
+    if severity == "critical":
+        recipients.add("USR-0001")  # national administrator
+    if region == "Region II, Cagayan Valley":
+        recipients.add("USR-0002")  # regional officer
+    if province == "Isabela":
+        recipients.add("USR-0005")  # provincial officer
+    if municipality == "Aparri":
+        recipients.add("USR-0006")  # municipal agriculture officer
+
+    for recipient_id in recipients:
+        db.add(
+            Alert(
+                detection_id=detection_id,
+                recipient_user_id=recipient_id,
+                alert_type=alert_type,
+            )
+        )
 
 
 if __name__ == "__main__":

@@ -57,3 +57,16 @@ class AuditLogEntrySchema(BaseModel):
     previousValue: str | None
     newValue: str | None
     createdAt: datetime
+
+
+class AlertSchema(BaseModel):
+    id: str
+    detectionId: str
+    farmId: str
+    alertType: str
+    severity: str
+    damageType: str
+    province: str
+    municipality: str
+    status: str
+    createdAt: datetime

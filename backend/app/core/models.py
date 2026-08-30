@@ -22,6 +22,19 @@ def generate_uuid() -> str:
     return str(uuid.uuid4())
 
 
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id: Mapped[str] = mapped_column(String(50), primary_key=True, default=generate_uuid)
+    detection_id: Mapped[str] = mapped_column(ForeignKey("damage_detections.id"), nullable=False)
+    recipient_user_id: Mapped[str] = mapped_column(ForeignKey("app_users.id"), nullable=False)
+    alert_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="unread")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    detection: Mapped["DamageDetection"] = relationship()
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 

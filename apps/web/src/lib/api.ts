@@ -75,6 +75,27 @@ export function fetchAuditLogs(): Promise<AuditLogEntry[]> {
   return request<AuditLogEntry[]>("/audit-logs", { headers: authHeaders() });
 }
 
+export interface AlertItem {
+  id: string;
+  detectionId: string;
+  farmId: string;
+  alertType: string;
+  severity: string;
+  damageType: string;
+  province: string;
+  municipality: string;
+  status: string;
+  createdAt: string;
+}
+
+export function fetchAlerts(): Promise<AlertItem[]> {
+  return request<AlertItem[]>("/alerts", { headers: authHeaders() });
+}
+
+export function markAlertRead(id: string): Promise<AlertItem> {
+  return request<AlertItem>(`/alerts/${id}/read`, { method: "POST", headers: authHeaders() });
+}
+
 export function login(email: string, password: string): Promise<LoginResponse> {
   return request<LoginResponse>("/auth/login", {
     method: "POST",

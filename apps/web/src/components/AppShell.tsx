@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "./NotificationBell";
 
 const NAV_ITEMS = [
   { label: "Live Map", to: "/" },
@@ -29,6 +30,7 @@ export default function AppShell({ children, headerRight }: AppShellProps) {
         </Link>
         <div className="flex items-center gap-3">
           {headerRight}
+          <NotificationBell />
           {user ? (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-slate-600">{user.name}</span>
