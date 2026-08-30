@@ -9,6 +9,7 @@ def to_detection_summary(detection: DamageDetection) -> DetectionSummarySchema:
         farmId=farm.farm_code,
         lat=farm.latitude,
         lng=farm.longitude,
+        boundary=farm.boundary or [],
         region=farm.region,
         province=farm.province,
         municipality=farm.municipality,

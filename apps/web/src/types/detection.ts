@@ -5,6 +5,7 @@ export interface DetectionSummary {
   farmId: string;
   lat: number;
   lng: number;
+  boundary?: [number, number][];
   region: string;
   province: string;
   municipality: string;

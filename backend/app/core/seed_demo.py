@@ -11,6 +11,7 @@ Run with: python -m app.core.seed_demo
 from datetime import date
 
 from app.core.database import Base, SessionLocal, engine
+from app.core.geometry import generate_farm_boundary
 from app.core.models import DamageDetection, DisasterEvent, Farm, User
 from app.core.security import hash_password
 
@@ -173,6 +174,7 @@ def seed():
                 farm_code=farm_code,
                 latitude=lat,
                 longitude=lng,
+                boundary=generate_farm_boundary(farm_code, lat, lng, area_ha),
                 area_hectares=area_ha,
                 region=region,
                 province=province,

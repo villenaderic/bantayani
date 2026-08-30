@@ -10,6 +10,7 @@ class DetectionSummarySchema(BaseModel):
     farmId: str
     lat: float
     lng: float
+    boundary: list[list[float]]
     region: str
     province: str
     municipality: str

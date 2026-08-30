@@ -17,7 +17,7 @@ BantayAni combines satellite imagery, remote sensing indicators, and geospatial 
 
 The web dashboard now talks to a working FastAPI backend backed by a real database: farms, detections, and disasters are seeded and served over the API. Authentication is real too, government accounts sign in with an email and password, receive a JWT, and only signed in reviewers (not viewer accounts) can verify, reject, or request field validation on a detection. If the backend is not running or not reachable, the frontend automatically falls back to the same demo dataset bundled in the browser, so the interface stays fully usable on its own and verification controls simply update local state instead of persisting anywhere. A badge in the header shows whether you are looking at live backend data or the offline demo fallback.
 
-Satellite imagery itself is still fully simulated. Farm boundaries are still stored as points rather than polygons. See `docs/phases.md` for the full build sequence.
+Satellite imagery itself is still fully simulated, and there is no real detection pipeline computing NDVI or change detection from actual satellite imagery yet, all severity and confidence figures are demo data. Farm boundaries are now real polygons rather than points on the map, though they are generated to roughly match each farm's stated area rather than sourced from an actual cadastral dataset. See `docs/phases.md` for the full build sequence.
 
 ## Repository layout
 

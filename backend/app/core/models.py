@@ -12,7 +12,7 @@ moves off point markers and onto real farm polygons.
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -64,6 +64,7 @@ class Farm(Base):
     farm_code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     latitude: Mapped[float] = mapped_column(Float, nullable=False)
     longitude: Mapped[float] = mapped_column(Float, nullable=False)
+    boundary: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     area_hectares: Mapped[float] = mapped_column(Float, nullable=False)
     region: Mapped[str] = mapped_column(String(100), nullable=False)
     province: Mapped[str] = mapped_column(String(100), nullable=False)
