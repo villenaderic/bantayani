@@ -64,8 +64,8 @@ export default function FarmDetailPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white px-6 py-4">
-        <div className="flex items-center justify-between">
+      <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <Link to="/" className="text-xs text-slate-400 hover:text-slate-600">
               &larr; Back to map

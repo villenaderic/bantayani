@@ -48,7 +48,7 @@ export default function FarmsPage() {
   return (
     <AppShell headerRight={<DataSourceBadge isLive={isLive} isLoading={isLoading} />}>
       <div className="p-4">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-slate-800">Farms</h2>
             <p className="text-sm text-slate-500">{rows.length} farm records, demo data</p>
@@ -57,12 +57,12 @@ export default function FarmsPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search farm ID, province, crop"
-            className="w-72 rounded border border-slate-200 px-3 py-1.5 text-sm focus:border-agri-green focus:outline-none"
+            className="w-full rounded border border-slate-200 px-3 py-1.5 text-sm focus:border-agri-green focus:outline-none sm:w-72"
           />
         </div>
 
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+          <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
               <tr>
                 <SortableHeader label="Farm ID" sortKey="farmId" activeKey={sortKey} asc={sortAsc} onClick={toggleSort} />
