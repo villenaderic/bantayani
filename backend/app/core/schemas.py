@@ -70,3 +70,42 @@ class AlertSchema(BaseModel):
     municipality: str
     status: str
     createdAt: datetime
+
+
+class RemoteSensingReadingSchema(BaseModel):
+    date: date
+    ndvi: float
+    ndwi: float
+    cloudPercentage: int
+    isUsable: bool
+
+
+class DamageScoreBreakdownSchema(BaseModel):
+    vegetationChange: float
+    waterAnomaly: float
+    historicalDeviation: float
+    spatialAnomaly: float
+    total: float
+    suggestedSeverity: str
+
+
+class ConfidenceBreakdownSchema(BaseModel):
+    imageryQualityComponent: float
+    disasterCorrelationComponent: float
+    total: float
+
+
+class RemoteSensingResponseSchema(BaseModel):
+    farmId: str
+    ndviBefore: float
+    ndviAfter: float
+    ndwiBefore: float
+    ndwiAfter: float
+    beforeDate: date
+    afterDate: date
+    readings: list[RemoteSensingReadingSchema]
+    damageScore: DamageScoreBreakdownSchema
+    confidence: ConfidenceBreakdownSchema
+    algorithmName: str
+    algorithmVersion: str
+    baselineReference: str

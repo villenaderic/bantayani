@@ -4,9 +4,16 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_optional_user, require_roles
 from app.core.models import AuditLog, DamageDetection, User
-from app.core.schemas import DetectionSummarySchema
+from app.core.remote_sensing import generate_remote_sensing_series
+from app.core.schemas import (
+    ConfidenceBreakdownSchema,
+    DamageScoreBreakdownSchema,
+    DetectionSummarySchema,
+    RemoteSensingResponseSchema,
+)
 from app.core.scoping import filter_by_scope
 from app.core.serializers import to_detection_summary
+from geospatial.algorithms.damage_scoring import compute_confidence, compute_damage_score
 
 router = APIRouter()
 
@@ -44,6 +51,67 @@ def get_detection(detection_id: str, db: Session = Depends(get_db)):
     if not detection:
         raise HTTPException(status_code=404, detail="Detection not found")
     return to_detection_summary(detection)
+
+
+@router.get("/{detection_id}/remote-sensing", response_model=RemoteSensingResponseSchema)
+def get_remote_sensing(detection_id: str, db: Session = Depends(get_db)):
+    """Returns the synthetic NDVI and NDWI observation series for this
+    detection, together with a transparent damage score breakdown and
+    confidence breakdown computed from it by the rule based scoring
+    engine in geospatial/algorithms/damage_scoring.py.
+    """
+    detection = db.query(DamageDetection).filter(DamageDetection.id == detection_id).first()
+    if not detection:
+        raise HTTPException(status_code=404, detail="Detection not found")
+
+    farm = detection.farm
+    series = generate_remote_sensing_series(
+        detection_id=detection.id,
+        severity=detection.severity,
+        damage_type=detection.damage_type,
+        detection_date=detection.detection_date,
+    )
+
+    score = compute_damage_score(
+        ndvi_before=series["ndviBefore"],
+        ndvi_after=series["ndviAfter"],
+        ndwi_before=series["ndwiBefore"],
+        ndwi_after=series["ndwiAfter"],
+        readings=series["readings"],
+        affected_area_hectares=detection.affected_area_hectares,
+        area_hectares=farm.area_hectares,
+    )
+    confidence = compute_confidence(
+        readings=series["readings"],
+        has_known_disaster_correlation=detection.disaster_event_id is not None,
+    )
+
+    return RemoteSensingResponseSchema(
+        farmId=farm.farm_code,
+        ndviBefore=series["ndviBefore"],
+        ndviAfter=series["ndviAfter"],
+        ndwiBefore=series["ndwiBefore"],
+        ndwiAfter=series["ndwiAfter"],
+        beforeDate=series["beforeDate"],
+        afterDate=series["afterDate"],
+        readings=series["readings"],
+        damageScore=DamageScoreBreakdownSchema(
+            vegetationChange=score.vegetation_change,
+            waterAnomaly=score.water_anomaly,
+            historicalDeviation=score.historical_deviation,
+            spatialAnomaly=score.spatial_anomaly,
+            total=score.total,
+            suggestedSeverity=score.suggested_severity,
+        ),
+        confidence=ConfidenceBreakdownSchema(
+            imageryQualityComponent=confidence.imagery_quality_component,
+            disasterCorrelationComponent=confidence.disaster_correlation_component,
+            total=confidence.total,
+        ),
+        algorithmName=detection.algorithm_name,
+        algorithmVersion=detection.algorithm_version,
+        baselineReference="2026 seasonal baseline",
+    )
 
 
 def _update_status(detection_id: str, status: str, db: Session, user: User) -> DetectionSummarySchema:

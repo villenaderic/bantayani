@@ -1,14 +1,21 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useBantayaniData } from "../hooks/useBantayaniData";
 import { useAuth } from "../context/AuthContext";
-import { generateFarmDetail } from "../data/generateFarmDetail";
+import { generateFarmDetail, buildTimeline } from "../data/generateFarmDetail";
 import ImageryViewer from "../components/ImageryViewer";
 import RemoteSensingPanel from "../components/RemoteSensingPanel";
+import DamageScorePanel from "../components/DamageScorePanel";
 import Timeline from "../components/Timeline";
 import VerificationControls from "../components/VerificationControls";
 import { SeverityBadge, StatusBadge } from "../components/StatusBadges";
-import { verifyDetection, rejectDetection, fieldValidateDetection } from "../lib/api";
+import {
+  verifyDetection,
+  rejectDetection,
+  fieldValidateDetection,
+  fetchRemoteSensing,
+  type RemoteSensingResponse,
+} from "../lib/api";
 import type { DetectionStatus, FarmDetail } from "../types/farm";
 
 const VIEWER_ROLE = "viewer";
@@ -21,10 +28,50 @@ export default function FarmDetailPage() {
   const initialFarm = useMemo(() => (summary ? generateFarmDetail(summary) : null), [summary]);
   const [farm, setFarm] = useState<FarmDetail | null>(initialFarm);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [remoteSensing, setRemoteSensing] = useState<RemoteSensingResponse | null>(null);
 
   if (initialFarm && farm?.farmId !== initialFarm.farmId) {
     setFarm(initialFarm);
+    setRemoteSensing(null);
   }
+
+  useEffect(() => {
+    if (!isLive || !summary) return;
+    let cancelled = false;
+
+    fetchRemoteSensing(summary.id)
+      .then((data) => {
+        if (cancelled) return;
+        setRemoteSensing(data);
+        setFarm((prev) => {
+          if (!prev) return prev;
+          const timeline = buildTimeline(summary, data.readings);
+          return {
+            ...prev,
+            ndviBefore: data.ndviBefore,
+            ndviAfter: data.ndviAfter,
+            ndwiBefore: data.ndwiBefore,
+            ndwiAfter: data.ndwiAfter,
+            beforeDate: data.beforeDate,
+            afterDate: data.afterDate,
+            readings: data.readings,
+            timeline,
+            algorithmName: data.algorithmName,
+            algorithmVersion: data.algorithmVersion,
+            baselineReference: data.baselineReference,
+          };
+        });
+      })
+      .catch(() => {
+        // Backend reachable overall but this specific call failed, or the
+        // detection has no remote sensing record yet. The page keeps
+        // showing the client generated fallback already in state.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLive, summary]);
 
   if (!farm) {
     return (
@@ -106,6 +153,15 @@ export default function FarmDetailPage() {
 
         <div className="space-y-4">
           <RemoteSensingPanel farm={farm} />
+          {remoteSensing && (
+            <DamageScorePanel
+              damageScore={remoteSensing.damageScore}
+              confidence={remoteSensing.confidence}
+              recordedSeverity={farm.severity}
+              algorithmName={remoteSensing.algorithmName}
+              algorithmVersion={remoteSensing.algorithmVersion}
+            />
+          )}
           <VerificationControls
             status={farm.detectionStatus}
             onStatusChange={handleStatusChange}

@@ -96,6 +96,49 @@ export function markAlertRead(id: string): Promise<AlertItem> {
   return request<AlertItem>(`/alerts/${id}/read`, { method: "POST", headers: authHeaders() });
 }
 
+export interface RemoteSensingReading {
+  date: string;
+  ndvi: number;
+  ndwi: number;
+  cloudPercentage: number;
+  isUsable: boolean;
+}
+
+export interface DamageScoreBreakdown {
+  vegetationChange: number;
+  waterAnomaly: number;
+  historicalDeviation: number;
+  spatialAnomaly: number;
+  total: number;
+  suggestedSeverity: string;
+}
+
+export interface ConfidenceBreakdown {
+  imageryQualityComponent: number;
+  disasterCorrelationComponent: number;
+  total: number;
+}
+
+export interface RemoteSensingResponse {
+  farmId: string;
+  ndviBefore: number;
+  ndviAfter: number;
+  ndwiBefore: number;
+  ndwiAfter: number;
+  beforeDate: string;
+  afterDate: string;
+  readings: RemoteSensingReading[];
+  damageScore: DamageScoreBreakdown;
+  confidence: ConfidenceBreakdown;
+  algorithmName: string;
+  algorithmVersion: string;
+  baselineReference: string;
+}
+
+export function fetchRemoteSensing(detectionId: string): Promise<RemoteSensingResponse> {
+  return request<RemoteSensingResponse>(`/detections/${detectionId}/remote-sensing`);
+}
+
 export function login(email: string, password: string): Promise<LoginResponse> {
   return request<LoginResponse>("/auth/login", {
     method: "POST",

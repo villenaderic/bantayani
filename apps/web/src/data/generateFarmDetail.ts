@@ -82,7 +82,7 @@ function buildReadings(
   });
 }
 
-function buildTimeline(summary: DetectionSummary, readings: RemoteSensingReading[]): TimelineEntry[] {
+export function buildTimeline(summary: DetectionSummary, readings: RemoteSensingReading[]): TimelineEntry[] {
   const labels = ["Healthy", "Healthy", "Healthy", "Vegetation declining"];
   const entries: TimelineEntry[] = readings.slice(0, -1).map((r, index) => ({
     date: r.date,

@@ -15,9 +15,13 @@ BantayAni combines satellite imagery, remote sensing indicators, and geospatial 
 
 ## Project status
 
-The web dashboard now talks to a working FastAPI backend backed by a real database: farms, detections, and disasters are seeded and served over the API. Authentication is real too, government accounts sign in with an email and password, receive a JWT, and only signed in reviewers (not viewer accounts) can verify, reject, or request field validation on a detection. Every such decision is written to an audit log, viewable on the Settings page by national administrator and GIS analyst accounts. Role based data scoping is also enforced: a regional, provincial, or municipal officer only sees detections within their assigned area. High and critical severity detections automatically generate alerts routed to the relevant officer for that area (and to the national administrator for anything critical), visible from the notification bell in the header once signed in. If the backend is not running or not reachable, the frontend automatically falls back to the same demo dataset bundled in the browser, so the interface stays fully usable on its own and verification controls simply update local state instead of persisting anywhere. A badge in the header shows whether you are looking at live backend data or the offline demo fallback.
+The web dashboard now talks to a working FastAPI backend backed by a real database: farms, detections, and disasters are seeded and served over the API. If the backend is not running or not reachable, the frontend automatically falls back to the same demo dataset bundled in the browser, so the interface stays fully usable on its own and verification controls simply update local state instead of persisting anywhere. A badge in the header shows whether you are looking at live backend data or the offline demo fallback.
 
-Satellite imagery itself is still fully simulated, and there is no real detection pipeline computing NDVI or change detection from actual satellite imagery yet, all severity and confidence figures are demo data. Farm boundaries are now real polygons rather than points on the map, though they are generated to roughly match each farm's stated area rather than sourced from an actual cadastral dataset. See `docs/phases.md` for the full build sequence.
+Authentication is real too, government accounts sign in with an email and password, receive a JWT, and only signed in reviewers (not viewer accounts) can verify, reject, or request field validation on a detection. Every such decision is written to an audit log, viewable on the Settings page by national administrator and GIS analyst accounts. Role based data scoping is also enforced: a regional, provincial, or municipal officer only sees detections within their assigned area. High and critical severity detections automatically generate alerts routed to the relevant officer for that area (and to the national administrator for anything critical), visible from the notification bell in the header once signed in.
+
+A real rule based damage scoring engine lives in `geospatial/algorithms/damage_scoring.py` and backs a `/api/detections/{id}/remote-sensing` endpoint. It computes a transparent, reproducible damage score and a separate confidence score from a synthetic NDVI and NDWI observation series, consistently between the map, the farm page, and this endpoint, rather than fabricated independently in the browser as it was before. The farm inspection page shows this as a supporting diagnostic alongside the recorded severity; the two are expected to mostly agree and are not required to match exactly, disagreement between an algorithm's read and the reviewed record is what the verification workflow exists to resolve. There is still no real satellite imagery provider (Earth Engine, Sentinel, or Landsat) connected, so the underlying NDVI and NDWI observations are generated rather than measured, but the scoring algorithm itself only depends on the shape of that observation series, not on where the numbers came from, so it should keep working unchanged once a real provider is connected.
+
+Farm boundaries are real polygons rather than points on the map, though they are generated to roughly match each farm's stated area rather than sourced from an actual cadastral dataset. See `docs/phases.md` for the full build sequence.
 
 ## Repository layout
 
@@ -31,7 +35,7 @@ bantayani/
     workers/        Background jobs for satellite processing and notifications
     migrations/     Database migrations
   geospatial/
-    algorithms/     Change detection and damage scoring
+    algorithms/     Change detection and damage scoring, imported by the backend at build time
     preprocessing/  Cloud masking, mosaicking, index calculation
     models/         Machine learning models (introduced once training data exists)
   infrastructure/   Deployment and infrastructure configuration
