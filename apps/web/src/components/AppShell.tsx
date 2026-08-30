@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { label: "Disasters", to: "/disasters" },
   { label: "Analytics", to: "/analytics" },
   { label: "Reports", to: "/reports" },
-  { label: "Settings", to: null },
+  { label: "Settings", to: "/settings" },
 ];
 
 interface AppShellProps {

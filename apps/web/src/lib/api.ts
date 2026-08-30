@@ -60,6 +60,21 @@ export function fetchDisasters(): Promise<DisasterEvent[]> {
   return request<DisasterEvent[]>("/disasters", { headers: authHeaders() });
 }
 
+export interface AuditLogEntry {
+  id: string;
+  userName: string | null;
+  action: string;
+  entityType: string;
+  entityId: string;
+  previousValue: string | null;
+  newValue: string | null;
+  createdAt: string;
+}
+
+export function fetchAuditLogs(): Promise<AuditLogEntry[]> {
+  return request<AuditLogEntry[]>("/audit-logs", { headers: authHeaders() });
+}
+
 export function login(email: string, password: string): Promise<LoginResponse> {
   return request<LoginResponse>("/auth/login", {
     method: "POST",

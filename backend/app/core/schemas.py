@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -44,3 +44,16 @@ class AnalyticsSummarySchema(BaseModel):
     verifiedDamageHa: float
     activeIncidents: int
     criticalIncidents: int
+
+
+class AuditLogEntrySchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    userName: str | None
+    action: str
+    entityType: str
+    entityId: str
+    previousValue: str | None
+    newValue: str | None
+    createdAt: datetime

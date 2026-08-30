@@ -22,6 +22,21 @@ def generate_uuid() -> str:
     return str(uuid.uuid4())
 
 
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[str] = mapped_column(String(50), primary_key=True, default=generate_uuid)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("app_users.id"), nullable=True)
+    action: Mapped[str] = mapped_column(String(255), nullable=False)
+    entity_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    entity_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    previous_value: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    new_value: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    user: Mapped["User | None"] = relationship()
+
+
 class User(Base):
     # Named app_users rather than users so it does not collide with the
     # richer users table defined in backend/migrations/001_initial_schema.sql,
