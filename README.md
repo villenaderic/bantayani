@@ -89,6 +89,23 @@ npm run dev
 
 With no backend reachable at `VITE_API_BASE_URL`, the interface automatically shows the bundled demo dataset and marks itself as such in the header.
 
+## Running the tests
+
+Backend tests cover authentication, role gated actions, data scoping, alerts, the audit log, and the damage scoring algorithm, using a temporary SQLite database so nothing touches your real data:
+
+```
+cd backend
+pip install -r requirements.txt -r requirements-dev.txt --break-system-packages
+pytest
+```
+
+Frontend tests cover the deterministic farm polygon and observation series generators:
+
+```
+cd apps/web
+npm test
+```
+
 ## Demo mode
 
 Until real satellite credentials are supplied in `.env`, the system runs in demo mode. All imagery, detections, and predictions in this mode are simulated and clearly labeled as such in the interface. Demo mode exists so the full workflow, map, and inspection panel can be evaluated without an Earth Engine account or paid imagery access.
