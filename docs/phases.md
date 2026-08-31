@@ -2,23 +2,23 @@
 
 BantayAni is being built in phases so that each layer is stable before the next depends on it.
 
-## Phase 1: Foundation (current)
-Project structure, database schema, authentication scaffolding, role based access control, PostGIS setup, base map shell, and the dashboard skeleton.
+## Phase 1: Foundation — done
+Project structure, database schema, authentication and role based access control, PostGIS setup, base map shell, and the dashboard skeleton.
 
-## Phase 2: Farm Intelligence
-Farm detail pages, satellite imagery integration, image viewer, before and after comparison, and the observation timeline.
+## Phase 2: Farm Intelligence — mostly done, real imagery still open
+Farm detail pages, image viewer, before and after comparison, and the observation timeline are built and working. The one piece not done is the actual satellite imagery integration named in this phase: every image shown is a generated placeholder clearly labeled "Simulated image, demo data," not a real photograph. Connecting a real provider (Google Earth Engine, Sentinel Hub, or similar) needs credentials and a provider decision from the project owner before it can proceed, see docs/architecture.md for the ImageryProvider abstraction this will plug into.
 
-## Phase 3: Automated Detection
-Earth observation processing, NDVI and NDWI calculation, change detection, and automated damage scoring.
+## Phase 3: Automated Detection — mostly done, real observations still open
+NDVI and NDWI calculation, change detection, and damage scoring are implemented as a real, tested algorithm in geospatial/algorithms/damage_scoring.py, computing a transparent score from an observation series. What is not real yet is the observation series itself, it is generated rather than measured, for the same reason as Phase 2: no satellite imagery provider is connected. The scoring algorithm was written to only depend on the shape of that series, so it should keep working unchanged once real observations replace the simulated ones.
 
-## Phase 4: Government Verification
-Verification workflow, field validation, photo evidence, reviewer notes, and audit logging.
+## Phase 4: Government Verification — done
+Verification workflow, audit logging, and role gated actions are built and tested. Field validation photo evidence upload is not yet implemented.
 
-## Phase 5: Analytics
-Regional, provincial, and crop level analytics, plus report generation.
+## Phase 5: Analytics — done
+Regional, provincial, and crop level analytics, plus report generation, are built.
 
-## Phase 6: Mobile
-Mobile map, alerts, farm inspection, offline field validation, and background synchronization.
+## Phase 6: Mobile — not started
+The web dashboard is responsive and usable on a mobile browser, but no dedicated mobile app (Flutter or React Native) has been started. Offline field validation depends on this.
 
 ## Phase 7: Machine Learning
-Introduced only once enough validated detections exist to train and evaluate models responsibly.
+Introduced only once enough validated detections exist to train and evaluate models responsibly, and only after Phase 2 and Phase 3 are connected to real imagery, there is no real training data without it.
