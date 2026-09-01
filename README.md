@@ -21,6 +21,8 @@ Authentication is real too, government accounts sign in with an email and passwo
 
 A real rule based damage scoring engine lives in `geospatial/algorithms/damage_scoring.py` and backs a `/api/detections/{id}/remote-sensing` endpoint. It computes a transparent, reproducible damage score and a separate confidence score from a synthetic NDVI and NDWI observation series, consistently between the map, the farm page, and this endpoint, rather than fabricated independently in the browser as it was before. The farm inspection page shows this as a supporting diagnostic alongside the recorded severity; the two are expected to mostly agree and are not required to match exactly, disagreement between an algorithm's read and the reviewed record is what the verification workflow exists to resolve. There is still no real satellite imagery provider (Earth Engine, Sentinel, or Landsat) connected, so the underlying NDVI and NDWI observations are generated rather than measured, but the scoring algorithm itself only depends on the shape of that observation series, not on where the numbers came from, so it should keep working unchanged once a real provider is connected.
 
+National administrator and GIS analyst accounts can bulk import new farm records from a CSV file on the Settings page, with per row validation, duplicate farm code detection, and an audit log entry for the import itself. New farms created this way exist in the database but will not appear on the map, farms list, or detections list until a detection references them, since those views are still built around detections rather than farms directly.
+
 Farm boundaries are real polygons rather than points on the map, though they are generated to roughly match each farm's stated area rather than sourced from an actual cadastral dataset. See `docs/phases.md` for the full build sequence.
 
 ## Repository layout
@@ -91,13 +93,15 @@ With no backend reachable at `VITE_API_BASE_URL`, the interface automatically sh
 
 ## Running the tests
 
-Backend tests cover authentication, role gated actions, data scoping, alerts, the audit log, and the damage scoring algorithm, using a temporary SQLite database so nothing touches your real data:
+Backend tests cover authentication, role gated actions, data scoping, alerts, the audit log, and the damage scoring algorithm, using a temporary SQLite database so nothing touches your real data. `requirements.txt` deliberately excludes rasterio, geopandas, and geoalchemy2 (see `requirements-geospatial.txt`), since those need system level GDAL libraries that are painful to install natively on Windows and nothing in the codebase uses them yet:
 
 ```
 cd backend
 pip install -r requirements.txt -r requirements-dev.txt --break-system-packages
 pytest
 ```
+
+If you are running the backend through Docker instead of natively, GDAL is already installed in the image, so run the same commands with `docker compose exec backend` in front of them.
 
 Frontend tests cover the deterministic farm polygon and observation series generators:
 

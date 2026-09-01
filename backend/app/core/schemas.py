@@ -59,6 +59,17 @@ class AuditLogEntrySchema(BaseModel):
     createdAt: datetime
 
 
+class ImportRowErrorSchema(BaseModel):
+    row: int
+    message: str
+
+
+class FarmImportSummarySchema(BaseModel):
+    imported: int
+    skipped: int
+    errors: list[ImportRowErrorSchema]
+
+
 class AlertSchema(BaseModel):
     id: str
     detectionId: str

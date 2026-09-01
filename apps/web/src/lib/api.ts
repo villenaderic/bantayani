@@ -75,6 +75,40 @@ export function fetchAuditLogs(): Promise<AuditLogEntry[]> {
   return request<AuditLogEntry[]>("/audit-logs", { headers: authHeaders() });
 }
 
+export interface FarmImportRowError {
+  row: number;
+  message: string;
+}
+
+export interface FarmImportSummary {
+  imported: number;
+  skipped: number;
+  errors: FarmImportRowError[];
+}
+
+export async function importFarmsCsv(file: File): Promise<FarmImportSummary> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch(`${BASE_URL}/farms/import`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: formData,
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.detail ?? `Import failed with status ${response.status}`);
+    }
+    return (await response.json()) as FarmImportSummary;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export interface AlertItem {
   id: string;
   detectionId: string;

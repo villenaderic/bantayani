@@ -10,7 +10,11 @@ moves off point markers and onto real farm polygons.
 """
 
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone
+
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -30,7 +34,7 @@ class Alert(Base):
     recipient_user_id: Mapped[str] = mapped_column(ForeignKey("app_users.id"), nullable=False)
     alert_type: Mapped[str] = mapped_column(String(50), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="unread")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     detection: Mapped["DamageDetection"] = relationship()
 
@@ -45,7 +49,7 @@ class AuditLog(Base):
     entity_id: Mapped[str] = mapped_column(String(100), nullable=False)
     previous_value: Mapped[str | None] = mapped_column(String(100), nullable=True)
     new_value: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     user: Mapped["User | None"] = relationship()
 
@@ -117,7 +121,7 @@ class DamageDetection(Base):
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="automated_detection")
     algorithm_name: Mapped[str] = mapped_column(String(100), nullable=False, default="AgriDamageDetector")
     algorithm_version: Mapped[str] = mapped_column(String(50), nullable=False, default="1.4.2")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     farm: Mapped["Farm"] = relationship(back_populates="detections")
     disaster_event: Mapped["DisasterEvent | None"] = relationship(back_populates="detections")

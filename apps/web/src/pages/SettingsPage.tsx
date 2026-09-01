@@ -1,23 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppShell from "../components/AppShell";
 import DataSourceBadge from "../components/DataSourceBadge";
 import { useAuth } from "../context/AuthContext";
 import { useBantayaniData } from "../hooks/useBantayaniData";
-import { fetchAuditLogs, type AuditLogEntry } from "../lib/api";
+import { fetchAuditLogs, importFarmsCsv, type AuditLogEntry, type FarmImportSummary } from "../lib/api";
 
-const AUDIT_VIEWER_ROLES = new Set(["national_administrator", "gis_analyst"]);
+const ELEVATED_ROLES = new Set(["national_administrator", "gis_analyst"]);
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const { isLive, isLoading } = useBantayaniData();
-  const canViewAuditLog = Boolean(user && AUDIT_VIEWER_ROLES.has(user.role));
+  const canManageData = Boolean(user && ELEVATED_ROLES.has(user.role));
 
   return (
     <AppShell headerRight={<DataSourceBadge isLive={isLive} isLoading={isLoading} />}>
       <div className="p-4">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-slate-800">Settings</h2>
-          <p className="text-sm text-slate-500">Account details and audit log</p>
+          <p className="text-sm text-slate-500">Account details, data import, and audit log</p>
         </div>
 
         <div className="mb-4 max-w-md rounded-lg border border-slate-200 bg-white p-4">
@@ -35,13 +35,28 @@ export default function SettingsPage() {
           )}
         </div>
 
+        <div className="mb-4 max-w-3xl rounded-lg border border-slate-200 bg-white p-4">
+          <h3 className="mb-3 text-sm font-semibold text-slate-700">Import farms</h3>
+          {!isLive ? (
+            <p className="text-sm text-slate-400">
+              Farm import requires a live backend connection. Currently showing demo data.
+            </p>
+          ) : !canManageData ? (
+            <p className="text-sm text-slate-400">
+              Farm import is available to national administrator and GIS analyst accounts.
+            </p>
+          ) : (
+            <FarmImportForm />
+          )}
+        </div>
+
         <div className="max-w-3xl rounded-lg border border-slate-200 bg-white p-4">
           <h3 className="mb-3 text-sm font-semibold text-slate-700">Audit log</h3>
           {!isLive ? (
             <p className="text-sm text-slate-400">
               The audit log requires a live backend connection. Currently showing demo data.
             </p>
-          ) : !canViewAuditLog ? (
+          ) : !canManageData ? (
             <p className="text-sm text-slate-400">
               The audit log is visible to national administrator and GIS analyst accounts.
             </p>
@@ -51,6 +66,77 @@ export default function SettingsPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+function FarmImportForm() {
+  const [file, setFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [result, setResult] = useState<FarmImportSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleImport() {
+    if (!file) return;
+    setIsSubmitting(true);
+    setError(null);
+    setResult(null);
+    try {
+      const summary = await importFarmsCsv(file);
+      setResult(summary);
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div>
+      <p className="mb-3 text-xs text-slate-500">
+        CSV columns required: farm_code, latitude, longitude, area_hectares, region, province,
+        municipality, barangay, crop. Each row becomes a new farm record; rows with an existing
+        farm_code or invalid values are reported back rather than silently skipped.
+      </p>
+
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          className="text-sm text-slate-600"
+        />
+        <button
+          onClick={handleImport}
+          disabled={!file || isSubmitting}
+          className="rounded bg-agri-green px-4 py-1.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isSubmitting ? "Importing..." : "Import"}
+        </button>
+      </div>
+
+      {error && <p className="mb-3 rounded bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>}
+
+      {result && (
+        <div className="rounded border border-slate-100 bg-slate-50 p-3 text-sm">
+          <p className="mb-2 font-medium text-slate-700">
+            Imported {result.imported}, skipped {result.skipped}
+          </p>
+          {result.errors.length > 0 && (
+            <ul className="space-y-1 text-xs text-red-600">
+              {result.errors.map((e, i) => (
+                <li key={i}>
+                  Row {e.row}: {e.message}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

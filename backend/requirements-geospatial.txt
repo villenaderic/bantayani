@@ -1,0 +1,11 @@
+# Optional, only needed once real raster or PostGIS geometry work begins.
+# Not installed by default because rasterio requires system GDAL libraries
+# (libgdal-dev) that are not available on every machine, notably plain
+# Windows without WSL, and nothing in the codebase imports these yet.
+# The Docker backend image already has GDAL installed at the OS level
+# (see backend/Dockerfile), so these can be added there directly once
+# they are actually used.
+geoalchemy2==0.15.2
+rasterio==1.3.11
+geopandas==1.0.1
+numpy==2.1.1
