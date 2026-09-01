@@ -56,6 +56,35 @@ export function fetchDetections(): Promise<DetectionSummary[]> {
   return request<DetectionSummary[]>("/detections", { headers: authHeaders() });
 }
 
+export interface FarmDetectionSummary {
+  id: string;
+  damageType: string;
+  severity: string;
+  status: string;
+  confidence: number;
+  affectedAreaHectares: number;
+  detectionDate: string;
+  disasterId: string | null;
+}
+
+export interface FarmRecord {
+  farmId: string;
+  lat: number;
+  lng: number;
+  boundary: [number, number][];
+  region: string;
+  province: string;
+  municipality: string;
+  barangay: string;
+  crop: string;
+  areaHectares: number;
+  detection: FarmDetectionSummary | null;
+}
+
+export function fetchFarms(): Promise<FarmRecord[]> {
+  return request<FarmRecord[]>("/farms", { headers: authHeaders() });
+}
+
 export function fetchDisasters(): Promise<DisasterEvent[]> {
   return request<DisasterEvent[]>("/disasters", { headers: authHeaders() });
 }

@@ -8,9 +8,13 @@ from app.core.database import get_db
 from app.core.deps import get_optional_user, require_roles
 from app.core.geometry import generate_farm_boundary
 from app.core.models import AuditLog, DamageDetection, Farm, User
-from app.core.schemas import DetectionSummarySchema, FarmImportSummarySchema, ImportRowErrorSchema
-from app.core.scoping import filter_by_scope
-from app.core.serializers import to_detection_summary
+from app.core.schemas import (
+    FarmDetectionSummarySchema,
+    FarmImportSummarySchema,
+    FarmRecordSchema,
+    ImportRowErrorSchema,
+)
+from app.core.scoping import filter_farms_by_scope
 
 router = APIRouter()
 
@@ -27,25 +31,59 @@ IMPORT_REQUIRED_COLUMNS = [
 ]
 
 
-@router.get("", response_model=list[DetectionSummarySchema])
-def list_farms(db: Session = Depends(get_db), user: User | None = Depends(get_optional_user)):
-    """Return every farm the current user is permitted to see, together with its most recent detection."""
-    detections = db.query(DamageDetection).all()
-    detections = filter_by_scope(detections, user)
-    return [to_detection_summary(d) for d in detections]
-
-
-@router.get("/{farm_code}", response_model=DetectionSummarySchema)
-def get_farm(farm_code: str, db: Session = Depends(get_db)):
-    detection = (
+def _to_farm_record(farm: Farm, db: Session) -> FarmRecordSchema:
+    latest_detection = (
         db.query(DamageDetection)
-        .join(Farm)
-        .filter(Farm.farm_code == farm_code)
+        .filter(DamageDetection.farm_id == farm.id)
+        .order_by(DamageDetection.detection_date.desc())
         .first()
     )
-    if not detection:
+
+    detection_summary = None
+    if latest_detection:
+        detection_summary = FarmDetectionSummarySchema(
+            id=latest_detection.id,
+            damageType=latest_detection.damage_type,
+            severity=latest_detection.severity,
+            status=latest_detection.status,
+            confidence=latest_detection.confidence_score,
+            affectedAreaHectares=latest_detection.affected_area_hectares,
+            detectionDate=latest_detection.detection_date,
+            disasterId=latest_detection.disaster_event_id,
+        )
+
+    return FarmRecordSchema(
+        farmId=farm.farm_code,
+        lat=farm.latitude,
+        lng=farm.longitude,
+        boundary=farm.boundary or [],
+        region=farm.region,
+        province=farm.province,
+        municipality=farm.municipality,
+        barangay=farm.barangay,
+        crop=farm.crop,
+        areaHectares=farm.area_hectares,
+        detection=detection_summary,
+    )
+
+
+@router.get("", response_model=list[FarmRecordSchema])
+def list_farms(db: Session = Depends(get_db), user: User | None = Depends(get_optional_user)):
+    """Return every farm the current user is permitted to see, together
+    with its most recent detection if one exists. A farm with no
+    detection yet, for example one just added through CSV import, still
+    appears here with a null detection rather than being invisible.
+    """
+    farms = filter_farms_by_scope(db.query(Farm).all(), user)
+    return [_to_farm_record(farm, db) for farm in farms]
+
+
+@router.get("/{farm_code}", response_model=FarmRecordSchema)
+def get_farm(farm_code: str, db: Session = Depends(get_db)):
+    farm = db.query(Farm).filter(Farm.farm_code == farm_code).first()
+    if not farm:
         raise HTTPException(status_code=404, detail="Farm not found")
-    return to_detection_summary(detection)
+    return _to_farm_record(farm, db)
 
 
 @router.post("/import", response_model=FarmImportSummarySchema)

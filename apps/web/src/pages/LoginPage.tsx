@@ -69,17 +69,6 @@ export default function LoginPage() {
             {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
         </form>
-
-        <div className="mt-5 rounded bg-slate-50 p-3 text-xs text-slate-500">
-          <p className="mb-1 font-medium text-slate-600">Demo accounts</p>
-          <p>admin@bantayani.gov.ph, national, sees everything</p>
-          <p>regional@bantayani.gov.ph, Region II only</p>
-          <p>provincial@bantayani.gov.ph, Isabela province only</p>
-          <p>municipal@bantayani.gov.ph, Aparri municipality only</p>
-          <p>gis@bantayani.gov.ph, analyst, sees everything</p>
-          <p>viewer@bantayani.gov.ph, read only, sees everything</p>
-          <p className="mt-1">Password for every demo account: bantayani-demo</p>
-        </div>
       </div>
     </div>
   );

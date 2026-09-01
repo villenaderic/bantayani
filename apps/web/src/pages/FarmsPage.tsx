@@ -3,38 +3,44 @@ import { Link } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import DataSourceBadge from "../components/DataSourceBadge";
 import { SeverityBadge, StatusBadge } from "../components/StatusBadges";
-import { useBantayaniData } from "../hooks/useBantayaniData";
+import { useFarms } from "../hooks/useFarms";
+import type { DamageSeverity, DetectionStatus } from "../types/farm";
 
 type SortKey = "farmId" | "province" | "crop" | "areaHectares" | "affectedAreaHectares";
 
 export default function FarmsPage() {
-  const { detections, isLoading, isLive } = useBantayaniData();
+  const { farms, isLoading, isLive } = useFarms();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("farmId");
   const [sortAsc, setSortAsc] = useState(true);
 
   const rows = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    const filtered = detections.filter((d) => {
+    const filtered = farms.filter((f) => {
       if (!term) return true;
       return (
-        d.farmId.toLowerCase().includes(term) ||
-        d.province.toLowerCase().includes(term) ||
-        d.municipality.toLowerCase().includes(term) ||
-        d.crop.toLowerCase().includes(term)
+        f.farmId.toLowerCase().includes(term) ||
+        f.province.toLowerCase().includes(term) ||
+        f.municipality.toLowerCase().includes(term) ||
+        f.crop.toLowerCase().includes(term)
       );
     });
 
     return [...filtered].sort((a, b) => {
       const direction = sortAsc ? 1 : -1;
-      const aValue = a[sortKey];
-      const bValue = b[sortKey];
-      if (typeof aValue === "number" && typeof bValue === "number") {
+      if (sortKey === "affectedAreaHectares") {
+        const aValue = a.detection?.affectedAreaHectares ?? -1;
+        const bValue = b.detection?.affectedAreaHectares ?? -1;
         return (aValue - bValue) * direction;
       }
-      return String(aValue).localeCompare(String(bValue)) * direction;
+      if (sortKey === "areaHectares") {
+        return (a.areaHectares - b.areaHectares) * direction;
+      }
+      const aValue = String(a[sortKey]);
+      const bValue = String(b[sortKey]);
+      return aValue.localeCompare(bValue) * direction;
     });
-  }, [detections, searchTerm, sortKey, sortAsc]);
+  }, [farms, searchTerm, sortKey, sortAsc]);
 
   function toggleSort(key: SortKey) {
     if (key === sortKey) {
@@ -51,7 +57,7 @@ export default function FarmsPage() {
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-slate-800">Farms</h2>
-            <p className="text-sm text-slate-500">{rows.length} farm records, demo data</p>
+            <p className="text-sm text-slate-500">{rows.length} farm records</p>
           </div>
           <input
             value={searchTerm}
@@ -88,23 +94,37 @@ export default function FarmsPage() {
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                <tr key={row.farmId} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                   <td className="px-4 py-2">
-                    <Link to={`/farms/${row.farmId}`} className="font-medium text-agri-green hover:underline">
-                      {row.farmId}
-                    </Link>
+                    {row.detection ? (
+                      <Link to={`/farms/${row.farmId}`} className="font-medium text-agri-green hover:underline">
+                        {row.farmId}
+                      </Link>
+                    ) : (
+                      <span className="font-medium text-slate-500">{row.farmId}</span>
+                    )}
                   </td>
                   <td className="px-4 py-2 text-slate-600">
                     {row.municipality}, {row.province}
                   </td>
                   <td className="px-4 py-2 text-slate-600">{row.crop}</td>
                   <td className="px-4 py-2 text-slate-600">{row.areaHectares.toFixed(1)} ha</td>
-                  <td className="px-4 py-2 text-slate-600">{row.affectedAreaHectares.toFixed(1)} ha</td>
-                  <td className="px-4 py-2">
-                    <SeverityBadge severity={row.severity} />
+                  <td className="px-4 py-2 text-slate-600">
+                    {row.detection ? `${row.detection.affectedAreaHectares.toFixed(1)} ha` : "\u2014"}
                   </td>
                   <td className="px-4 py-2">
-                    <StatusBadge status={row.status} />
+                    {row.detection ? (
+                      <SeverityBadge severity={row.detection.severity as DamageSeverity} />
+                    ) : (
+                      <span className="text-xs text-slate-400">No detection</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2">
+                    {row.detection ? (
+                      <StatusBadge status={row.detection.status as DetectionStatus} />
+                    ) : (
+                      <span className="text-xs text-slate-400">&mdash;</span>
+                    )}
                   </td>
                 </tr>
               ))}

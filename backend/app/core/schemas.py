@@ -70,6 +70,36 @@ class FarmImportSummarySchema(BaseModel):
     errors: list[ImportRowErrorSchema]
 
 
+class FarmDetectionSummarySchema(BaseModel):
+    """The current detection for a farm, when one exists. Kept as a
+    nested optional object rather than flattened fields so it is
+    unambiguous in the API response whether a farm simply has no
+    detection yet, as opposed to having one with blank fields."""
+
+    id: str
+    damageType: str
+    severity: str
+    status: str
+    confidence: float
+    affectedAreaHectares: float
+    detectionDate: date
+    disasterId: str | None = None
+
+
+class FarmRecordSchema(BaseModel):
+    farmId: str
+    lat: float
+    lng: float
+    boundary: list[list[float]]
+    region: str
+    province: str
+    municipality: str
+    barangay: str
+    crop: str
+    areaHectares: float
+    detection: FarmDetectionSummarySchema | None = None
+
+
 class AlertSchema(BaseModel):
     id: str
     detectionId: str
