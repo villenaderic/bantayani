@@ -17,8 +17,8 @@ Verification workflow, audit logging, and role gated actions are built and teste
 ## Phase 5: Analytics — done
 Regional, provincial, and crop level analytics, plus report generation, are built.
 
-## Phase 6: Mobile — not started
-The web dashboard is responsive and usable on a mobile browser, but no dedicated mobile app (Flutter or React Native) has been started. Offline field validation depends on this.
+## Phase 6: Mobile — started
+A working Expo, React Native, and TypeScript mobile app exists in `apps/mobile`, with login, a dashboard, and a farm inspection screen with the same role gated verification actions as the web app, sharing the same backend and JWT authentication. Not yet built: a map screen (needs a native map library and an API key decision), offline support and background sync, and photo evidence capture. See `apps/mobile/README.md`.
 
 ## Phase 7: Machine Learning
 Introduced only once enough validated detections exist to train and evaluate models responsibly, and only after Phase 2 and Phase 3 are connected to real imagery, there is no real training data without it.
