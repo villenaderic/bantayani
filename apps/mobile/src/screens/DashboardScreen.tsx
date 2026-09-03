@@ -13,9 +13,14 @@ import { fetchAnalyticsSummary, fetchDetections } from "../lib/api";
 import { SeverityBadge, StatusBadge } from "../components/StatusBadges";
 import type { AnalyticsSummary, DetectionSummary } from "../types/api";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../../App";
+import type { CompositeScreenProps } from "@react-navigation/native";
+import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import type { RootStackParamList, TabParamList } from "../../App";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Dashboard">;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<TabParamList, "Dashboard">,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 export default function DashboardScreen({ navigation }: Props) {
   const { user, logout } = useAuth();

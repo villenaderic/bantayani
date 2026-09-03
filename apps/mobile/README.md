@@ -5,14 +5,16 @@ Mobile app for government field officers, built with Expo, React Native, and Typ
 ## What's here
 
 - Sign in against the same backend and JWT auth as the web dashboard
+- Bottom tab navigation with a Dashboard tab and a Live Map tab
 - Dashboard with live stats (active incidents, critical count, potential and verified damage) and a severity sorted list of detections
+- Live Map: a WebView running Leaflet with OpenStreetMap tiles, the same approach as the web app, so no Google Maps or Mapbox API key is needed. Severity colored markers, tap one to open that farm's inspection screen
 - Farm inspection screen with the same verify, reject, and field validation actions as the web app, gated by the same role rules (a viewer account cannot act here either)
 
 ## What's not here yet
 
-- No map screen. The web app's Leaflet based map has no direct React Native equivalent without adding a native map library (react-native-maps) and a Google Maps or Mapbox API key, which needs a decision from the project owner before wiring in
 - No offline support or background sync. Every screen requires a live connection to the backend right now
 - No photo evidence capture for field validation
+- The map has no clustering or farm boundary polygons yet, unlike the web app's map, it is markers only for now
 
 ## Running it
 

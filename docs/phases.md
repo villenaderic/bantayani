@@ -18,7 +18,7 @@ Verification workflow, audit logging, and role gated actions are built and teste
 Regional, provincial, and crop level analytics, plus report generation, are built.
 
 ## Phase 6: Mobile — started
-A working Expo, React Native, and TypeScript mobile app exists in `apps/mobile`, with login, a dashboard, and a farm inspection screen with the same role gated verification actions as the web app, sharing the same backend and JWT authentication. Not yet built: a map screen (needs a native map library and an API key decision), offline support and background sync, and photo evidence capture. See `apps/mobile/README.md`.
+A working Expo, React Native, and TypeScript mobile app exists in `apps/mobile`, with login, a dashboard, a live map (WebView based Leaflet, no API key needed, matching the web app's approach), and a farm inspection screen with the same role gated verification actions as the web app, sharing the same backend and JWT authentication. Not yet built: offline support and background sync, photo evidence capture, and marker clustering or farm polygons on the mobile map. See `apps/mobile/README.md`.
 
 ## Phase 7: Machine Learning
 Introduced only once enough validated detections exist to train and evaluate models responsibly, and only after Phase 2 and Phase 3 are connected to real imagery, there is no real training data without it.
