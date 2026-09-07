@@ -2,8 +2,13 @@ import type { DetectionSummary } from "../types/detection";
 import type { DisasterEvent } from "../types/disaster";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
+const MEDIA_BASE_URL = BASE_URL.replace(/\/api\/?$/, "");
 const REQUEST_TIMEOUT_MS = 2500;
 const TOKEN_STORAGE_KEY = "bantayani_token";
+
+export function resolveMediaUrl(path: string): string {
+  return `${MEDIA_BASE_URL}${path}`;
+}
 
 export interface AuthUser {
   id: string;
@@ -200,6 +205,21 @@ export interface RemoteSensingResponse {
 
 export function fetchRemoteSensing(detectionId: string): Promise<RemoteSensingResponse> {
   return request<RemoteSensingResponse>(`/detections/${detectionId}/remote-sensing`);
+}
+
+export interface FieldEvidenceItem {
+  id: string;
+  detectionId: string;
+  userName: string;
+  photoUrl: string;
+  gpsLat: number | null;
+  gpsLng: number | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+export function fetchFieldEvidence(detectionId: string): Promise<FieldEvidenceItem[]> {
+  return request<FieldEvidenceItem[]>(`/detections/${detectionId}/field-evidence`);
 }
 
 export function login(email: string, password: string): Promise<LoginResponse> {

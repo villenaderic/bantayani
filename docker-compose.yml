@@ -39,6 +39,7 @@ services:
     volumes:
       - ./backend:/app
       - ./geospatial:/app/geospatial
+      - ./backend/media:/app/media
 
   worker:
     build:

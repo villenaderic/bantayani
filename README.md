@@ -23,6 +23,8 @@ A real rule based damage scoring engine lives in `geospatial/algorithms/damage_s
 
 National administrator and GIS analyst accounts can bulk import new farm records from a CSV file on the Settings page, with per row validation, duplicate farm code detection, and an audit log entry for the import itself. The Farms list shows every farm regardless of whether it has a detection yet, so an imported farm with no detection appears there marked accordingly; the map, detections list, and analytics remain built around detections specifically, which is intentional, there is nothing meaningful to show on a damage map for a farm with no detection.
 
+Field officers, on the mobile app, can capture a photo, GPS location, and notes as field evidence for a detection, which is stored and marks the detection field validated in one action. The photo, along with who submitted it and where, shows up on the web farm inspection page as well, kept visually separate from the satellite based detection above it. Photos are stored on local disk under `backend/media` in development rather than real object storage, which the specification calls for eventually; the storage location is centralized in one place in the code so swapping it later is contained.
+
 Farm boundaries are real polygons rather than points on the map, though they are generated to roughly match each farm's stated area rather than sourced from an actual cadastral dataset. See `docs/phases.md` for the full build sequence.
 
 ## Repository layout

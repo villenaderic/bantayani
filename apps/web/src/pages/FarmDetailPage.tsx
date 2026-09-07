@@ -8,6 +8,7 @@ import RemoteSensingPanel from "../components/RemoteSensingPanel";
 import DamageScorePanel from "../components/DamageScorePanel";
 import Timeline from "../components/Timeline";
 import VerificationControls from "../components/VerificationControls";
+import FieldEvidencePanel from "../components/FieldEvidencePanel";
 import { SeverityBadge, StatusBadge } from "../components/StatusBadges";
 import {
   verifyDetection,
@@ -149,6 +150,8 @@ export default function FarmDetailPage() {
           <ImageryViewer farm={farm} />
 
           <Timeline entries={farm.timeline} />
+
+          {summary && <FieldEvidencePanel detectionId={summary.id} />}
         </div>
 
         <div className="space-y-4">

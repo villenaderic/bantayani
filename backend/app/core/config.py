@@ -22,6 +22,7 @@ class Settings(BaseSettings):
 
     storage_provider: str = "local"
     storage_bucket: str = "bantayani-media"
+    media_dir: str = "media"
 
     cors_allowed_origins: list[str] = ["http://localhost:5173"]
 

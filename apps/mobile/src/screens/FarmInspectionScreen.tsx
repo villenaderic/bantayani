@@ -8,13 +8,9 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import {
-  fetchDetections,
-  fieldValidateDetection,
-  rejectDetection,
-  verifyDetection,
-} from "../lib/api";
+import { fetchDetections, rejectDetection, verifyDetection } from "../lib/api";
 import { SeverityBadge, StatusBadge } from "../components/StatusBadges";
+import FieldEvidenceCapture from "../components/FieldEvidenceCapture";
 import type { DetectionSummary, DetectionStatus } from "../types/api";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../App";
@@ -38,6 +34,7 @@ export default function FarmInspectionScreen({ route }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showEvidenceCapture, setShowEvidenceCapture] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,14 +51,12 @@ export default function FarmInspectionScreen({ route }: Props) {
     };
   }, [detectionId]);
 
-  async function handleAction(action: "verify" | "reject" | "field-validation") {
+  async function handleAction(action: "verify" | "reject") {
     if (!detection) return;
     setActionError(null);
     setIsSubmitting(true);
     try {
-      const updater = { verify: verifyDetection, reject: rejectDetection, "field-validation": fieldValidateDetection }[
-        action
-      ];
+      const updater = { verify: verifyDetection, reject: rejectDetection }[action];
       const updated = await updater(detection.id);
       setDetection(updated);
     } catch (err) {
@@ -69,6 +64,12 @@ export default function FarmInspectionScreen({ route }: Props) {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  async function handleEvidenceSubmitted() {
+    setShowEvidenceCapture(false);
+    const all = await fetchDetections();
+    setDetection(all.find((d) => d.id === detectionId) ?? null);
   }
 
   if (isLoading) {
@@ -125,26 +126,36 @@ export default function FarmInspectionScreen({ route }: Props) {
             : "Sign in with a government account to record a verification decision."}
         </Text>
       ) : (
-        <View style={styles.actions}>
-          <ActionButton
-            label="Verify damage"
-            color="#1F6B3B"
-            disabled={isDecided || isSubmitting}
-            onPress={() => handleAction("verify")}
-          />
-          <ActionButton
-            label="Reject"
-            color="#64748B"
-            disabled={isDecided || isSubmitting}
-            onPress={() => handleAction("reject")}
-          />
-          <ActionButton
-            label="Needs field validation"
-            color="#0369A1"
-            disabled={isDecided || isSubmitting}
-            onPress={() => handleAction("field-validation")}
-          />
-        </View>
+        <>
+          <View style={styles.actions}>
+            <ActionButton
+              label="Verify damage"
+              color="#1F6B3B"
+              disabled={isDecided || isSubmitting}
+              onPress={() => handleAction("verify")}
+            />
+            <ActionButton
+              label="Reject"
+              color="#64748B"
+              disabled={isDecided || isSubmitting}
+              onPress={() => handleAction("reject")}
+            />
+            <ActionButton
+              label="Needs field validation"
+              color="#0369A1"
+              disabled={isDecided || isSubmitting || showEvidenceCapture}
+              onPress={() => setShowEvidenceCapture(true)}
+            />
+          </View>
+
+          {showEvidenceCapture && (
+            <FieldEvidenceCapture
+              detectionId={detection.id}
+              onSubmitted={handleEvidenceSubmitted}
+              onCancel={() => setShowEvidenceCapture(false)}
+            />
+          )}
+        </>
       )}
 
       {actionError && <Text style={styles.errorText}>{actionError}</Text>}

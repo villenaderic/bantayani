@@ -39,6 +39,21 @@ class Alert(Base):
     detection: Mapped["DamageDetection"] = relationship()
 
 
+class FieldEvidence(Base):
+    __tablename__ = "field_evidence"
+
+    id: Mapped[str] = mapped_column(String(50), primary_key=True, default=generate_uuid)
+    detection_id: Mapped[str] = mapped_column(ForeignKey("damage_detections.id"), nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("app_users.id"), nullable=False)
+    photo_path: Mapped[str] = mapped_column(String(500), nullable=False)
+    gps_lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    gps_lng: Mapped[float | None] = mapped_column(Float, nullable=True)
+    notes: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    user: Mapped["User"] = relationship()
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 

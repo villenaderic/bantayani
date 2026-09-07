@@ -22,3 +22,7 @@ backend/.pytest_cache/
 *service-account*.json
 *.pem
 *.key
+*.mobileprovision
+
+# Uploaded field evidence photos, stored locally in development
+backend/media/

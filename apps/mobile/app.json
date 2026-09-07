@@ -20,6 +20,21 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "BantayAni needs photo library access so you can attach an existing photo as field evidence.",
+          "cameraPermission": "BantayAni needs camera access to capture field evidence photos for damage verification."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "BantayAni records your GPS location when you submit field evidence, so the photo can be tied to where it was taken."
+        }
+      ]
+    ]
   }
 }

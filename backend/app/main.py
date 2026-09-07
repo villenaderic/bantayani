@@ -1,9 +1,11 @@
 from contextlib import asynccontextmanager
 import logging
+import os
 import time
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
@@ -68,6 +70,9 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api")
+
+os.makedirs(settings.media_dir, exist_ok=True)
+app.mount("/media", StaticFiles(directory=settings.media_dir), name="media")
 
 
 @app.get("/health")

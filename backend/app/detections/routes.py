@@ -1,14 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import uuid
+
+from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.deps import get_optional_user, require_roles
-from app.core.models import AuditLog, DamageDetection, User
+from app.core.models import AuditLog, DamageDetection, FieldEvidence, User
 from app.core.remote_sensing import generate_remote_sensing_series
 from app.core.schemas import (
     ConfidenceBreakdownSchema,
     DamageScoreBreakdownSchema,
     DetectionSummarySchema,
+    FieldEvidenceSchema,
     RemoteSensingResponseSchema,
 )
 from app.core.scoping import filter_by_scope
@@ -16,6 +21,10 @@ from app.core.serializers import to_detection_summary
 from geospatial.algorithms.damage_scoring import compute_confidence, compute_damage_score
 
 router = APIRouter()
+settings = get_settings()
+
+MAX_PHOTO_BYTES = 10 * 1024 * 1024  # 10 MB
+ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/heic", "image/webp"}
 
 # Every authenticated role except viewer may record a verification decision.
 REVIEWER_ROLES = (
@@ -161,3 +170,104 @@ def field_validate_detection(
     user: User = Depends(require_roles(*REVIEWER_ROLES)),
 ):
     return _update_status(detection_id, "field_validated", db, user)
+
+
+def _to_evidence_schema(evidence: FieldEvidence) -> FieldEvidenceSchema:
+    return FieldEvidenceSchema(
+        id=evidence.id,
+        detectionId=evidence.detection_id,
+        userName=evidence.user.name,
+        photoUrl=f"/media/field-evidence/{evidence.detection_id}/{os.path.basename(evidence.photo_path)}",
+        gpsLat=evidence.gps_lat,
+        gpsLng=evidence.gps_lng,
+        notes=evidence.notes,
+        createdAt=evidence.created_at,
+    )
+
+
+@router.get("/{detection_id}/field-evidence", response_model=list[FieldEvidenceSchema])
+def list_field_evidence(detection_id: str, db: Session = Depends(get_db)):
+    entries = (
+        db.query(FieldEvidence)
+        .filter(FieldEvidence.detection_id == detection_id)
+        .order_by(FieldEvidence.created_at.desc())
+        .all()
+    )
+    return [_to_evidence_schema(e) for e in entries]
+
+
+@router.post("/{detection_id}/field-evidence", response_model=FieldEvidenceSchema)
+async def submit_field_evidence(
+    detection_id: str,
+    photo: UploadFile,
+    notes: str | None = Form(default=None),
+    gps_lat: float | None = Form(default=None),
+    gps_lng: float | None = Form(default=None),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(*REVIEWER_ROLES)),
+):
+    """Records a photograph, GPS location, and optional notes captured in
+    the field, per section 21 of the project specification. Submitting
+    evidence also marks the detection as field validated, since in
+    practice the two happen together, a field visit that produces
+    photographic evidence is what field validation means here.
+
+    Photos are stored on local disk under settings.media_dir rather than
+    real object storage (S3, Cloud Storage, or similar), which the
+    specification calls for. Local disk is a stand in for development;
+    the storage location is centralized in this one function so swapping
+    it for a real object storage client later does not touch anything
+    else in this endpoint.
+    """
+    detection = db.query(DamageDetection).filter(DamageDetection.id == detection_id).first()
+    if not detection:
+        raise HTTPException(status_code=404, detail="Detection not found")
+
+    if photo.content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported image type '{photo.content_type}'. Allowed: {', '.join(sorted(ALLOWED_IMAGE_CONTENT_TYPES))}",
+        )
+
+    contents = await photo.read()
+    if len(contents) > MAX_PHOTO_BYTES:
+        raise HTTPException(status_code=400, detail="Photo exceeds the 10 MB size limit")
+    if len(contents) == 0:
+        raise HTTPException(status_code=400, detail="Uploaded photo is empty")
+
+    extension = {"image/jpeg": "jpg", "image/png": "png", "image/heic": "heic", "image/webp": "webp"}[
+        photo.content_type
+    ]
+    filename = f"{uuid.uuid4()}.{extension}"
+    detection_dir = os.path.join(settings.media_dir, "field-evidence", detection_id)
+    os.makedirs(detection_dir, exist_ok=True)
+    file_path = os.path.join(detection_dir, filename)
+    with open(file_path, "wb") as f:
+        f.write(contents)
+
+    evidence = FieldEvidence(
+        detection_id=detection_id,
+        user_id=user.id,
+        photo_path=file_path,
+        gps_lat=gps_lat,
+        gps_lng=gps_lng,
+        notes=notes,
+    )
+    db.add(evidence)
+
+    previous_status = detection.status
+    detection.status = "field_validated"
+    db.add(
+        AuditLog(
+            user_id=user.id,
+            action="Submitted field evidence and marked field validated",
+            entity_type="damage_detection",
+            entity_id=detection_id,
+            previous_value=previous_status,
+            new_value="field_validated",
+        )
+    )
+
+    db.commit()
+    db.refresh(evidence)
+    return _to_evidence_schema(evidence)

@@ -93,3 +93,46 @@ export async function fieldValidateDetection(id: string): Promise<DetectionSumma
     headers: await authHeaders(),
   });
 }
+
+export async function submitFieldEvidence(
+  detectionId: string,
+  photoUri: string,
+  options: { notes?: string; gpsLat?: number; gpsLng?: number }
+): Promise<void> {
+  const formData = new FormData();
+  const filename = photoUri.split("/").pop() ?? "photo.jpg";
+  const extensionMatch = /\.(\w+)$/.exec(filename);
+  const extension = extensionMatch ? extensionMatch[1].toLowerCase() : "jpg";
+  const mimeType = extension === "png" ? "image/png" : "image/jpeg";
+
+  // React Native's fetch accepts this shape for a file field, it is not
+  // a real Blob but the platform's networking layer knows how to read
+  // the local file at this URI when given a name and type this way.
+  formData.append("photo", {
+    uri: photoUri,
+    name: filename,
+    type: mimeType,
+  } as unknown as Blob);
+
+  if (options.notes) formData.append("notes", options.notes);
+  if (options.gpsLat !== undefined) formData.append("gps_lat", String(options.gpsLat));
+  if (options.gpsLng !== undefined) formData.append("gps_lng", String(options.gpsLng));
+
+  const headers = await authHeaders();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  try {
+    const response = await fetch(`${BASE_URL}/detections/${detectionId}/field-evidence`, {
+      method: "POST",
+      headers,
+      body: formData,
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.detail ?? `Upload failed with status ${response.status}`);
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+}

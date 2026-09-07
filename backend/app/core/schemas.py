@@ -113,6 +113,17 @@ class AlertSchema(BaseModel):
     createdAt: datetime
 
 
+class FieldEvidenceSchema(BaseModel):
+    id: str
+    detectionId: str
+    userName: str
+    photoUrl: str
+    gpsLat: float | None
+    gpsLng: float | None
+    notes: str | None
+    createdAt: datetime
+
+
 class RemoteSensingReadingSchema(BaseModel):
     date: date
     ndvi: float
