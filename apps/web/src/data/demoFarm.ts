@@ -51,4 +51,5 @@ export const demoFarm: FarmDetail = {
       isDetectionEvent: true,
     },
   ],
+  imagerySource: "demo",
 };

@@ -52,4 +52,10 @@ export interface FarmDetail {
   ndwiAfter: number;
   readings: RemoteSensingReading[];
   timeline: TimelineEntry[];
+  /** "demo" (synthetic) or "copernicus" (real Sentinel-2). Defaults to
+   * "demo" for the client generated fallback used before a live backend
+   * response arrives. */
+  imagerySource: "demo" | "copernicus";
+  beforeImageUrl?: string | null;
+  afterImageUrl?: string | null;
 }

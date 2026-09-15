@@ -5,23 +5,42 @@ interface SimulatedSatelliteImageProps {
   condition: "healthy" | "damaged";
   label: string;
   className?: string;
+  /** A real rendered image URL (true color only, from the Copernicus
+   * Process API). When present, this is shown instead of the generated
+   * illustration below, with a "Live" badge instead of the "Simulated"
+   * one. */
+  realImageUrl?: string | null;
 }
 
 /**
- * Renders a stand in satellite image for demo mode.
- * This is a generated illustration, never a real satellite observation.
- * Once a real imagery provider is connected, this component should be
- * replaced by an actual image tile renderer behind the same layer prop.
+ * Renders a satellite image for the imagery viewer. If a real image URL
+ * is available (true color layer, Copernicus configured and reachable),
+ * it is shown directly. Otherwise this falls back to a generated
+ * illustration, clearly labeled as such, never presented as a real
+ * observation.
  */
 export default function SimulatedSatelliteImage({
   layer,
   condition,
   label,
   className = "",
+  realImageUrl,
 }: SimulatedSatelliteImageProps) {
   const healthy = condition === "healthy";
 
   const palette = getPalette(layer, healthy);
+
+  if (realImageUrl) {
+    return (
+      <div className={`relative overflow-hidden rounded-md bg-slate-900 ${className}`}>
+        <img src={realImageUrl} alt={label} className="h-full w-full object-cover" />
+        <div className="absolute left-2 top-2 rounded bg-black/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+          Live Sentinel-2 imagery
+        </div>
+        <div className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-xs text-white">{label}</div>
+      </div>
+    );
+  }
 
   return (
     <div className={`relative overflow-hidden rounded-md bg-slate-900 ${className}`}>

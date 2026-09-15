@@ -51,6 +51,7 @@ export function generateFarmDetail(summary: DetectionSummary): FarmDetail {
     ndwiAfter: round(ndwiAfter),
     readings,
     timeline,
+    imagerySource: "demo",
   };
 }
 

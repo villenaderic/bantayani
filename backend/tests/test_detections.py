@@ -49,6 +49,7 @@ def test_remote_sensing_returns_score_breakdown(client):
     response = client.get("/api/detections/DET-0006/remote-sensing")
     assert response.status_code == 200
     data = response.json()
+    assert data["source"] == "demo"
     assert 0 <= data["damageScore"]["total"] <= 100
     assert data["damageScore"]["suggestedSeverity"] in (
         "low",

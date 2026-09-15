@@ -189,12 +189,15 @@ export interface ConfidenceBreakdown {
 
 export interface RemoteSensingResponse {
   farmId: string;
+  source: "demo" | "copernicus";
   ndviBefore: number;
   ndviAfter: number;
   ndwiBefore: number;
   ndwiAfter: number;
   beforeDate: string;
   afterDate: string;
+  beforeImageUrl: string | null;
+  afterImageUrl: string | null;
   readings: RemoteSensingReading[];
   damageScore: DamageScoreBreakdown;
   confidence: ConfidenceBreakdown;

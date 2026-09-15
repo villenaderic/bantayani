@@ -60,6 +60,9 @@ export default function FarmDetailPage() {
             algorithmName: data.algorithmName,
             algorithmVersion: data.algorithmVersion,
             baselineReference: data.baselineReference,
+            imagerySource: data.source,
+            beforeImageUrl: data.beforeImageUrl,
+            afterImageUrl: data.afterImageUrl,
           };
         });
       })

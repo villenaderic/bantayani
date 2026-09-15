@@ -8,7 +8,6 @@ from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.deps import get_optional_user, require_roles
 from app.core.models import AuditLog, DamageDetection, FieldEvidence, User
-from app.core.remote_sensing import generate_remote_sensing_series
 from app.core.schemas import (
     ConfidenceBreakdownSchema,
     DamageScoreBreakdownSchema,
@@ -18,6 +17,7 @@ from app.core.schemas import (
 )
 from app.core.scoping import filter_by_scope
 from app.core.serializers import to_detection_summary
+from app.imagery import get_observation_series_with_fallback
 from geospatial.algorithms.damage_scoring import compute_confidence, compute_damage_score
 
 router = APIRouter()
@@ -64,46 +64,66 @@ def get_detection(detection_id: str, db: Session = Depends(get_db)):
 
 @router.get("/{detection_id}/remote-sensing", response_model=RemoteSensingResponseSchema)
 def get_remote_sensing(detection_id: str, db: Session = Depends(get_db)):
-    """Returns the synthetic NDVI and NDWI observation series for this
-    detection, together with a transparent damage score breakdown and
-    confidence breakdown computed from it by the rule based scoring
-    engine in geospatial/algorithms/damage_scoring.py.
+    """Returns the NDVI and NDWI observation series for this detection,
+    together with a transparent damage score breakdown and confidence
+    breakdown computed from it by the rule based scoring engine in
+    geospatial/algorithms/damage_scoring.py. The series comes from
+    whichever ImageryProvider is configured (app/imagery), real
+    Sentinel-2 statistics from Copernicus, or synthetic demo data,
+    falling back to demo automatically if a real provider is
+    unreachable. The "source" field on the response tells you which one
+    actually produced this result.
     """
     detection = db.query(DamageDetection).filter(DamageDetection.id == detection_id).first()
     if not detection:
         raise HTTPException(status_code=404, detail="Detection not found")
 
     farm = detection.farm
-    series = generate_remote_sensing_series(
+    series = get_observation_series_with_fallback(
         detection_id=detection.id,
+        farm_code=farm.farm_code,
+        boundary=farm.boundary,
         severity=detection.severity,
         damage_type=detection.damage_type,
         detection_date=detection.detection_date,
     )
+    readings = [
+        {
+            "date": r.date,
+            "ndvi": r.ndvi,
+            "ndwi": r.ndwi,
+            "cloudPercentage": r.cloud_percentage,
+            "isUsable": r.is_usable,
+        }
+        for r in series.readings
+    ]
 
     score = compute_damage_score(
-        ndvi_before=series["ndviBefore"],
-        ndvi_after=series["ndviAfter"],
-        ndwi_before=series["ndwiBefore"],
-        ndwi_after=series["ndwiAfter"],
-        readings=series["readings"],
+        ndvi_before=series.ndvi_before,
+        ndvi_after=series.ndvi_after,
+        ndwi_before=series.ndwi_before,
+        ndwi_after=series.ndwi_after,
+        readings=readings,
         affected_area_hectares=detection.affected_area_hectares,
         area_hectares=farm.area_hectares,
     )
     confidence = compute_confidence(
-        readings=series["readings"],
+        readings=readings,
         has_known_disaster_correlation=detection.disaster_event_id is not None,
     )
 
     return RemoteSensingResponseSchema(
         farmId=farm.farm_code,
-        ndviBefore=series["ndviBefore"],
-        ndviAfter=series["ndviAfter"],
-        ndwiBefore=series["ndwiBefore"],
-        ndwiAfter=series["ndwiAfter"],
-        beforeDate=series["beforeDate"],
-        afterDate=series["afterDate"],
-        readings=series["readings"],
+        source=series.source,
+        ndviBefore=series.ndvi_before,
+        ndviAfter=series.ndvi_after,
+        ndwiBefore=series.ndwi_before,
+        ndwiAfter=series.ndwi_after,
+        beforeDate=series.before_date,
+        afterDate=series.after_date,
+        beforeImageUrl=series.before_image_url,
+        afterImageUrl=series.after_image_url,
+        readings=readings,
         damageScore=DamageScoreBreakdownSchema(
             vegetationChange=score.vegetation_change,
             waterAnomaly=score.water_anomaly,

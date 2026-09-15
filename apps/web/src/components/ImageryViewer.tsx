@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import type { FarmDetail, ImageryLayer } from "../types/farm";
 import SimulatedSatelliteImage from "./SimulatedSatelliteImage";
+import { resolveMediaUrl } from "../lib/api";
 
 interface ImageryViewerProps {
   farm: FarmDetail;
@@ -29,6 +30,12 @@ export default function ImageryViewer({ farm }: ImageryViewerProps) {
   const selectedReading = farm.readings.find((r) => r.date === selectedDate) ?? farm.readings[farm.readings.length - 1];
   const isAfterSelected = selectedDate === farm.afterDate;
 
+  // Real rendered images only exist for the true color layer today, and
+  // only when Copernicus actually produced one for this detection.
+  const canShowRealImages = layer === "true_color" && farm.imagerySource === "copernicus";
+  const realBeforeUrl = canShowRealImages && farm.beforeImageUrl ? resolveMediaUrl(farm.beforeImageUrl) : undefined;
+  const realAfterUrl = canShowRealImages && farm.afterImageUrl ? resolveMediaUrl(farm.afterImageUrl) : undefined;
+
   function handleDragStart() {
     isDragging.current = true;
   }
@@ -48,7 +55,14 @@ export default function ImageryViewer({ farm }: ImageryViewerProps) {
     <div className={`rounded-lg border border-slate-200 bg-white ${isFullscreen ? "fixed inset-4 z-50 flex flex-col shadow-2xl" : ""}`}>
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+              farm.imagerySource === "copernicus" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+            }`}
+          >
+            {farm.imagerySource === "copernicus" ? "Real Sentinel-2 data" : "Demo NDVI/NDWI data"}
+          </span>
           {LAYERS.map((l) => (
             <button
               key={l.id}
@@ -124,12 +138,14 @@ export default function ImageryViewer({ farm }: ImageryViewerProps) {
                 condition="healthy"
                 label={`Before, ${formatDate(farm.beforeDate)}`}
                 className="h-full"
+                realImageUrl={realBeforeUrl}
               />
               <SimulatedSatelliteImage
                 layer={layer}
                 condition="damaged"
                 label={`After, ${formatDate(farm.afterDate)}`}
                 className="h-full"
+                realImageUrl={realAfterUrl}
               />
             </div>
           ) : (
@@ -147,6 +163,7 @@ export default function ImageryViewer({ farm }: ImageryViewerProps) {
                 condition="damaged"
                 label={`After, ${formatDate(farm.afterDate)}`}
                 className="absolute inset-0 h-full w-full"
+                realImageUrl={realAfterUrl}
               />
               <div
                 className="absolute inset-0 h-full w-full"
@@ -157,6 +174,7 @@ export default function ImageryViewer({ farm }: ImageryViewerProps) {
                   condition="healthy"
                   label={`Before, ${formatDate(farm.beforeDate)}`}
                   className="h-full w-full"
+                  realImageUrl={realBeforeUrl}
                 />
               </div>
               <div

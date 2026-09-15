@@ -149,12 +149,15 @@ class ConfidenceBreakdownSchema(BaseModel):
 
 class RemoteSensingResponseSchema(BaseModel):
     farmId: str
+    source: str  # "demo" (synthetic) or "copernicus" (real Sentinel-2)
     ndviBefore: float
     ndviAfter: float
     ndwiBefore: float
     ndwiAfter: float
     beforeDate: date
     afterDate: date
+    beforeImageUrl: str | None = None
+    afterImageUrl: str | None = None
     readings: list[RemoteSensingReadingSchema]
     damageScore: DamageScoreBreakdownSchema
     confidence: ConfidenceBreakdownSchema

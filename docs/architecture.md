@@ -19,9 +19,9 @@ BantayAni separates four concerns that are easy to accidentally merge into one s
 ## Imagery and detection provider abstraction
 
 ```
-ImageryProvider
-  DemoImageryProvider
-  EarthEngineProvider
+ImageryProvider (backend/app/imagery)
+  DemoImageryProvider    — synthetic, deterministic, always available
+  CopernicusImageryProvider — Sentinel-2 via the Copernicus Data Space Ecosystem
 
 DetectionEngine
   DemoDetectionEngine
@@ -29,4 +29,4 @@ DetectionEngine
   MLDetectionEngine
 ```
 
-This keeps the demo data layer and any future real satellite integration behind the same interface, so the rest of the application does not need to change when real credentials are added.
+This keeps the demo data layer and the real satellite integration behind the same interface, so the rest of the application, the scoring algorithm, the API response shape, the frontend, does not need to change based on which one is active. Which provider a deployment uses is controlled by the `IMAGERY_PROVIDER` setting (`demo` or `copernicus`); `get_observation_series_with_fallback` in `backend/app/imagery/__init__.py` always tries the configured provider first and falls back to demo data on any failure, so a Copernicus outage degrades a farm page rather than breaking it. Google Earth Engine was considered for this slot and passed over in favor of Copernicus, whose Sentinel-2 imagery is free with no operational use licensing restriction.

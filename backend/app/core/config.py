@@ -17,8 +17,14 @@ class Settings(BaseSettings):
 
     google_maps_api_key: str = ""
 
-    earth_engine_service_account: str = ""
-    earth_engine_private_key_path: str = ""
+    # "demo" (default, synthetic data, always works) or "copernicus"
+    # (real Sentinel-2 imagery via the Copernicus Data Space Ecosystem).
+    # See app/imagery for the provider abstraction this selects between.
+    imagery_provider: str = "demo"
+    copernicus_client_id: str = ""
+    copernicus_client_secret: str = ""
+    copernicus_token_url: str = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+    copernicus_base_url: str = "https://sh.dataspace.copernicus.eu"
 
     storage_provider: str = "local"
     storage_bucket: str = "bantayani-media"
