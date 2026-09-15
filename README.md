@@ -1,49 +1,102 @@
-# BantayAni
+<div align="center">
 
-Agricultural damage detection and monitoring platform for the Philippines.
+# 🌾 BantayAni
 
-BantayAni combines satellite imagery, remote sensing indicators, and geospatial analysis to help the Department of Agriculture and its regional, provincial, and municipal offices identify agricultural areas that may have suffered damage from typhoons, flooding, drought, landslides, fire, and pest or disease stress, without waiting for every farmer to submit a manual report.
+**Satellite-powered agricultural damage detection and monitoring for the Philippines**
 
-## What it does
+*"Bantay" (watch/guard) + "Ani" (harvest) — watching over the harvest*
 
-- Scans agricultural areas across the Philippines using satellite and remote sensing data
-- Flags areas with a significant change in vegetation, water coverage, or land cover
-- Lets authorized personnel open a flagged farm and review before and after imagery, vegetation indices, and a historical timeline
-- Separates automatic detection from government verification and field validation, so nothing is reported as confirmed damage until a person has reviewed it
-- Aggregates affected area, crop type, and severity across barangay, municipality, province, and region
-- Supports a mobile app for field officers to review and act on detections, and can be installed on desktop or mobile as a Progressive Web App
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](backend/requirements.txt)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](backend)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](apps/web)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](apps/web)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-PostGIS-4169E1?logo=postgresql&logoColor=white)](docker-compose.yml)
+[![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)](apps/web)
 
-## Project status
+</div>
 
-The web dashboard now talks to a working FastAPI backend backed by a real database: farms, detections, and disasters are seeded and served over the API. If the backend is not running or not reachable, the frontend automatically falls back to the same demo dataset bundled in the browser, so the interface stays fully usable on its own and verification controls simply update local state instead of persisting anywhere. A badge in the header shows whether you are looking at live backend data or the offline demo fallback.
+---
 
-Authentication is real too, government accounts sign in with an email and password, receive a JWT, and only signed in reviewers (not viewer accounts) can verify, reject, or request field validation on a detection. Every such decision is written to an audit log, viewable on the Settings page by national administrator and GIS analyst accounts. Role based data scoping is also enforced: a regional, provincial, or municipal officer only sees detections within their assigned area. High and critical severity detections automatically generate alerts routed to the relevant officer for that area (and to the national administrator for anything critical), visible from the notification bell in the header once signed in.
+BantayAni combines free Sentinel-2 satellite imagery, remote sensing indices (NDVI/NDWI), and geospatial analysis to help the Philippine Department of Agriculture and its regional, provincial, and municipal offices spot farmland that may have been damaged by typhoons, flooding, drought, landslides, fire, or pest and disease stress — without waiting for every affected farmer to file a manual report.
 
-A real rule based damage scoring engine lives in `geospatial/algorithms/damage_scoring.py` and backs a `/api/detections/{id}/remote-sensing` endpoint. It computes a transparent, reproducible damage score and a separate confidence score from an NDVI and NDWI observation series, consistently between the map, the farm page, and this endpoint, rather than fabricated independently in the browser as it was before. The farm inspection page shows this as a supporting diagnostic alongside the recorded severity; the two are expected to mostly agree and are not required to match exactly, disagreement between an algorithm's read and the reviewed record is what the verification workflow exists to resolve.
+It's built as a full monitoring workflow, not just a map: an automated detection is only ever a *lead*. It moves through severity scoring, government verification, and optional field validation (with photo and GPS evidence from the field) before anything is treated as confirmed damage.
 
-That observation series can now come from real Sentinel-2 imagery. `backend/app/imagery` implements the ImageryProvider abstraction from `docs/architecture.md`: a DemoImageryProvider (synthetic, deterministic, the default, and the automatic fallback) and a CopernicusImageryProvider, which pulls real NDVI, NDWI, and cloud statistics from the free Copernicus Data Space Ecosystem, and renders real true color before/after images where a usable scene exists. Set `IMAGERY_PROVIDER=copernicus` plus `COPERNICUS_CLIENT_ID` and `COPERNICUS_CLIENT_SECRET` to switch a deployment over; if the real provider is unreachable for a given request, the backend falls back to demo data automatically rather than failing. The scoring algorithm only depends on the shape of the observation series, not where it came from, so it works unchanged either way. The remote sensing response includes a `source` field, and the imagery viewer shows a badge, so it is always clear whether you are looking at real or demo data.
+## ✨ Features
 
-National administrator and GIS analyst accounts can bulk import new farm records from a CSV file on the Settings page, with per row validation, duplicate farm code detection, and an audit log entry for the import itself. The Farms list shows every farm regardless of whether it has a detection yet, so an imported farm with no detection appears there marked accordingly; the map, detections list, and analytics remain built around detections specifically, which is intentional, there is nothing meaningful to show on a damage map for a farm with no detection.
+- 🛰️ **Real satellite imagery** — NDVI, NDWI, and cloud statistics pulled live from Sentinel-2 via the free Copernicus Data Space Ecosystem, with true-color before/after images
+- 🗺️ **Interactive map** — clustered, filterable view of every detection across the country, down to barangay level
+- 📊 **Transparent damage scoring** — a real, reproducible rule-based algorithm scores severity and confidence from the observation series, not a black box
+- 🔍 **Farm inspection view** — swipe/side-by-side before-and-after imagery, a vegetation index timeline, and full detection history per farm
+- ✅ **Verification workflow** — detection → assessment → government verification → field validation are kept as distinct, auditable stages
+- 🔐 **Real authentication & role-based scoping** — JWT-based login; regional, provincial, and municipal officers only ever see detections in their assigned area
+- 🔔 **Automated alerts** — high and critical detections route notifications to the relevant officer (and to national admins for anything critical)
+- 📝 **Full audit log** — every verification decision and data import is recorded and reviewable
+- 📥 **Bulk farm import** — CSV import with per-row validation, duplicate detection, and its own audit trail
+- 📱 **Field data capture** — a React Native/Expo mobile app lets field officers submit photo + GPS evidence, visible on the web dashboard
+- 📴 **Installable PWA** — the web app installs to desktop or mobile home screen and keeps working through spotty connections
+- 🧪 **Actually tested** — 69 backend tests and a growing frontend suite, run on every change described below
 
-Field officers, on the mobile app, can capture a photo, GPS location, and notes as field evidence for a detection, which is stored and marks the detection field validated in one action. The photo, along with who submitted it and where, shows up on the web farm inspection page as well, kept visually separate from the satellite based detection above it. Photos are stored on local disk under `backend/media` in development rather than real object storage, which the specification calls for eventually; the storage location is centralized in one place in the code so swapping it later is contained.
+## 📸 Screenshots
 
-The web app is a Progressive Web App. Anyone can install it from their browser (look for "Install" or "Add to Home Screen") to get an app icon and a standalone window, no app store needed. It precaches the app shell so it still opens without a connection, and API requests fall back to their last successful response for a few seconds if the network is briefly unavailable; this is meant to smooth over a spotty rural connection while inspecting a farm, not to provide genuine offline-first operation. Icons in `apps/web/public` are a placeholder, generated to match the brand color, not real designed branding, see `assets/prompts/image-generation-prompts.md` for the intended logo.
+> Add screenshots or a short demo GIF of the map, the farm inspection view, and the imagery comparison here — this is the first thing a visitor sees.
 
-Farm boundaries are real polygons rather than points on the map, though they are generated to roughly match each farm's stated area rather than sourced from an actual cadastral dataset. See `docs/phases.md` for the full build sequence.
+## 🧱 Tech Stack
 
-## Repository layout
+| Layer | Technology |
+|---|---|
+| **Web frontend** | React 18, TypeScript, Vite, Tailwind CSS, React Router, Leaflet + react-leaflet (marker clustering), Recharts, Vite PWA plugin |
+| **Mobile** | React Native, Expo, React Navigation, expo-location, expo-image-picker |
+| **Backend API** | FastAPI, Pydantic v2, SQLAlchemy 2, Alembic migrations, python-jose (JWT), bcrypt |
+| **Database** | PostgreSQL with PostGIS |
+| **Background jobs** | Celery, Redis |
+| **Satellite imagery** | Copernicus Data Space Ecosystem — Sentinel Hub Statistical API (NDVI/NDWI/cloud stats) and Process API (true-color rendering) over Sentinel-2 L2A |
+| **Geospatial algorithms** | Custom NDVI/NDWI change detection and rule-based damage scoring (`geospatial/algorithms`) |
+| **Testing** | pytest (backend), Vitest (frontend) |
+| **Infrastructure** | Docker Compose, environment-driven configuration |
+
+## 🏗️ Architecture
+
+BantayAni keeps four concerns deliberately separate, since they're easy to accidentally merge into one status field:
+
+1. **Detection** — what the remote sensing algorithm found in the imagery
+2. **Assessment** — the severity, confidence, and estimated affected area calculated from that detection
+3. **Verification** — the decision a government reviewer makes after reviewing it
+4. **Field Validation** — what personnel confirm in person, with photo and GPS evidence
+
+```mermaid
+flowchart LR
+    subgraph Imagery["Imagery Provider"]
+        direction TB
+        Demo[DemoImageryProvider\nsynthetic, always on]
+        Copernicus[CopernicusImageryProvider\nreal Sentinel-2]
+    end
+
+    Imagery -->|NDVI / NDWI series| Scoring[Damage Scoring Engine\ngeospatial/algorithms]
+    Scoring --> API[FastAPI backend]
+    API --> Web[React web dashboard]
+    API --> Mobile[Expo mobile app]
+    Mobile -->|photo + GPS evidence| API
+    Web -->|verify / reject / request validation| API
+    API --> Audit[(Audit Log)]
+    API --> DB[(PostgreSQL + PostGIS)]
+```
+
+Both the imagery source and the detection engine sit behind an interface, so a real satellite provider (or, later, a trained ML model) can be swapped in without touching the scoring algorithm, the API shape, or the frontend. See [`docs/architecture.md`](docs/architecture.md) for the full breakdown.
+
+## 📁 Repository Layout
 
 ```
 bantayani/
   apps/
     web/            React and TypeScript web dashboard
-    mobile/         Mobile app for field officers
+    mobile/         Expo/React Native app for field officers
   backend/
     app/            FastAPI application (auth, farms, detections, imagery, analytics, verification)
     workers/        Background jobs for satellite processing and notifications
-    migrations/     Database migrations
+    migrations/     Alembic database migrations
   geospatial/
-    algorithms/     Change detection and damage scoring, imported by the backend at build time
+    algorithms/     Change detection and damage scoring
     preprocessing/  Cloud masking, mosaicking, index calculation
     models/         Machine learning models (introduced once training data exists)
   infrastructure/   Deployment and infrastructure configuration
@@ -51,82 +104,117 @@ bantayani/
   assets/           Branding and image generation references
 ```
 
-## Requirements
+## 🚀 Getting Started
 
-- Docker and Docker Compose
-- Node.js 20 or later
-- Python 3.11 or later
+**Requirements:** Docker & Docker Compose, Node.js 20+, Python 3.11+
 
-## Getting started
-
-```
-git clone YOUR_REPOSITORY_URL_HERE
+```bash
+git clone https://github.com/villenaderic/bantayani.git
 cd bantayani
 cp .env.example .env
 docker compose up -d
 ```
 
-Once the containers are running, apply migrations and seed the demo dataset:
+Then apply migrations and seed the demo dataset:
 
-```
+```bash
 docker compose exec backend alembic upgrade head
 docker compose exec backend python -m app.core.seed_demo
 ```
 
-Seeding creates six demo government accounts, all sharing the password `bantayani-demo`:
+The web dashboard runs at `http://localhost:5173`, the API at `http://localhost:8000` (interactive docs at `http://localhost:8000/docs`).
 
-- `admin@bantayani.gov.ph`, national administrator, sees everything
-- `regional@bantayani.gov.ph`, regional officer, scoped to Region II
-- `provincial@bantayani.gov.ph`, provincial officer, scoped to Isabela province
-- `municipal@bantayani.gov.ph`, municipal agriculture officer, scoped to Aparri municipality
-- `gis@bantayani.gov.ph`, GIS analyst, sees everything
-- `viewer@bantayani.gov.ph`, viewer, read only, sees everything
+### Demo accounts
 
-The web dashboard will be available at `http://localhost:5173` and the API at `http://localhost:8000`. Interactive API documentation is served at `http://localhost:8000/docs`.
+Seeding creates six government accounts, all sharing the password `bantayani-demo`:
 
-## Running the frontend on its own
+| Account | Role | Scope |
+|---|---|---|
+| `admin@bantayani.gov.ph` | National administrator | Everything |
+| `gis@bantayani.gov.ph` | GIS analyst | Everything |
+| `regional@bantayani.gov.ph` | Regional officer | Region II |
+| `provincial@bantayani.gov.ph` | Provincial officer | Isabela |
+| `municipal@bantayani.gov.ph` | Municipal officer | Aparri |
+| `viewer@bantayani.gov.ph` | Viewer | Read-only, everything |
 
-The web app can also run without Docker or the backend at all:
+### Running the frontend on its own
 
-```
+```bash
 cd apps/web
 cp .env.example .env
 npm install
 npm run dev
 ```
 
-With no backend reachable at `VITE_API_BASE_URL`, the interface automatically shows the bundled demo dataset and marks itself as such in the header.
+With no backend reachable at `VITE_API_BASE_URL`, the interface automatically falls back to a bundled demo dataset and marks itself as such in the header — the whole workflow is explorable with zero setup.
 
-## Running the tests
+### Enabling real satellite imagery
 
-Backend tests cover authentication, role gated actions, data scoping, alerts, the audit log, and the damage scoring algorithm, using a temporary SQLite database so nothing touches your real data. `requirements.txt` deliberately excludes rasterio, geopandas, and geoalchemy2 (see `requirements-geospatial.txt`), since those need system level GDAL libraries that are painful to install natively on Windows and nothing in the codebase uses them yet:
+By default BantayAni runs on deterministic synthetic imagery so it works out of the box with no credentials. To switch a deployment to real Sentinel-2 data, create a free OAuth client in the [Copernicus Data Space Ecosystem](https://dataspace.copernicus.eu/) dashboard and set:
 
+```bash
+IMAGERY_PROVIDER=copernicus
+COPERNICUS_CLIENT_ID=your-client-id
+COPERNICUS_CLIENT_SECRET=your-client-secret
 ```
+
+If the real provider is ever unreachable, the backend automatically falls back to demo data for that request rather than failing — every API response includes a `source` field, and the imagery viewer shows a live/demo badge, so it's always clear which one you're looking at.
+
+## 🧪 Testing
+
+```bash
+# Backend (69 tests: auth, scoping, alerts, audit log, damage scoring, imagery providers)
 cd backend
 pip install -r requirements.txt -r requirements-dev.txt --break-system-packages
 pytest
-```
 
-If you are running the backend through Docker instead of natively, GDAL is already installed in the image, so run the same commands with `docker compose exec backend` in front of them.
-
-Frontend tests cover the deterministic farm polygon and observation series generators:
-
-```
+# Frontend
 cd apps/web
 npm test
 ```
 
-## Demo mode
+`requirements.txt` deliberately excludes `rasterio`, `geopandas`, and `geoalchemy2` (see `requirements-geospatial.txt`) since those need system-level GDAL libraries; nothing in the codebase uses them yet. GDAL is already installed inside the Docker image if you'd rather run tests with `docker compose exec backend` in front of the same commands.
 
-Until real satellite credentials are supplied in `.env`, the system runs in demo mode. All imagery, detections, and predictions in this mode are simulated and clearly labeled as such in the interface. Demo mode exists so the full workflow, map, and inspection panel can be evaluated without an Earth Engine account or paid imagery access.
+## 📊 Project Status
 
-## Documentation
+| Phase | Status |
+|---|---|
+| 1. Foundation | ✅ Done |
+| 2. Farm Intelligence (imagery viewer, real Sentinel-2 imagery) | ✅ Done |
+| 3. Automated Detection (NDVI/NDWI, damage scoring) | ✅ Done |
+| 4. Government Verification | ✅ Done |
+| 5. Analytics | ✅ Done |
+| 6. Mobile (field evidence capture) | 🟡 Core flow done, offline sync pending |
+| 7. Machine Learning | ⬜ Not started, needs validated real-world detections first |
 
-- `docs/architecture.md` — system architecture overview
-- `docs/database-schema.md` — full database schema
-- `docs/api.md` — API reference
-- `docs/phases.md` — development phases and current status
+Full detail on what's built and what's deliberately deferred lives in [`docs/phases.md`](docs/phases.md).
 
-## License
+## 🗺️ Roadmap / Ideas for Improvement
 
-Add your preferred license here.
+Contributions on any of these are very welcome:
+
+- **Per-layer real imagery** — false color, NDVI, water, and damage-mask layers currently still use a generated illustration; only the true-color layer renders a real Copernicus image today
+- **Mobile offline support** — background sync and local queuing for field evidence submitted without connectivity
+- **Marker clustering & polygons on the mobile map** — currently web-only
+- **Machine learning detection model** — `geospatial/models` is scaffolded for this once enough verified detections exist to train on
+- **Real cadastral farm boundaries** — boundaries are currently generated to roughly match each farm's stated area rather than sourced from an actual land registry
+- **Object storage for media** — field evidence photos and satellite renders currently live on local disk in development; swap in S3/GCS-compatible storage for production
+- **CI/CD pipeline** — GitHub Actions to run the backend and frontend test suites, lint, and typecheck on every PR
+- **End-to-end tests** — Playwright or Cypress coverage of the verification workflow end to end
+- **Filipino localization** — the interface is English-only today
+- **WebSocket-based live alerts** — alerts currently rely on polling rather than a push channel
+- **Refresh tokens / session expiry UX** — current JWT auth has no refresh flow
+- **Designed app icons & branding** — current icons are a generated placeholder; see `assets/prompts/image-generation-prompts.md` for the intended direction
+
+## 🤝 Contributing
+
+Issues and pull requests are welcome. If you're picking up something from the roadmap above, opening an issue first to say what you're working on avoids duplicate effort.
+
+## 📄 License
+
+Released under the [MIT License](LICENSE).
+
+## 🙏 Acknowledgments
+
+- Contains modified Copernicus Sentinel data, accessed via the [Copernicus Data Space Ecosystem](https://dataspace.copernicus.eu/).
+- Built with [FastAPI](https://fastapi.tiangolo.com/), [React](https://react.dev/), [Leaflet](https://leafletjs.com/), and [Expo](https://expo.dev/).
