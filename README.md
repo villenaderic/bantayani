@@ -7,6 +7,7 @@
 *"Bantay" (watch/guard) + "Ani" (harvest) — watching over the harvest*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/villenaderic/bantayani/actions/workflows/ci.yml/badge.svg)](https://github.com/villenaderic/bantayani/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](backend/requirements.txt)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](backend)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](apps/web)
@@ -162,6 +163,8 @@ If the real provider is ever unreachable, the backend automatically falls back t
 
 ## 🧪 Testing
 
+Every push and pull request runs the full suite in CI (see the badge at the top and [`.github/workflows/ci.yml`](.github/workflows/ci.yml)): backend tests, frontend typecheck/build/tests, and a mobile typecheck plus bundle export. To run the same checks locally:
+
 ```bash
 # Backend (69 tests: auth, scoping, alerts, audit log, damage scoring, imagery providers)
 cd backend
@@ -171,6 +174,10 @@ pytest
 # Frontend
 cd apps/web
 npm test
+
+# Mobile
+cd apps/mobile
+npm run typecheck
 ```
 
 `requirements.txt` deliberately excludes `rasterio`, `geopandas`, and `geoalchemy2` (see `requirements-geospatial.txt`) since those need system-level GDAL libraries; nothing in the codebase uses them yet. GDAL is already installed inside the Docker image if you'd rather run tests with `docker compose exec backend` in front of the same commands.
@@ -198,7 +205,6 @@ Contributions on any of these are very welcome:
 - **Machine learning detection model** — `geospatial/models` is scaffolded for this once enough verified detections exist to train on
 - **Real cadastral farm boundaries** — boundaries are currently generated to roughly match each farm's stated area rather than sourced from an actual land registry
 - **Object storage for media** — field evidence photos and satellite renders currently live on local disk in development; swap in S3/GCS-compatible storage for production
-- **CI/CD pipeline** — GitHub Actions to run the backend and frontend test suites, lint, and typecheck on every PR
 - **End-to-end tests** — Playwright or Cypress coverage of the verification workflow end to end
 - **Filipino localization** — the interface is English-only today
 - **WebSocket-based live alerts** — alerts currently rely on polling rather than a push channel
