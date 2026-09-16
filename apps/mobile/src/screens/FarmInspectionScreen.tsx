@@ -11,6 +11,7 @@ import { useAuth } from "../context/AuthContext";
 import { fetchDetections, rejectDetection, verifyDetection } from "../lib/api";
 import { SeverityBadge, StatusBadge } from "../components/StatusBadges";
 import FieldEvidenceCapture from "../components/FieldEvidenceCapture";
+import PendingSyncBanner from "../components/PendingSyncBanner";
 import type { DetectionSummary, DetectionStatus } from "../types/api";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../App";
@@ -94,7 +95,9 @@ export default function FarmInspectionScreen({ route }: Props) {
   const canAct = user ? REVIEWER_ROLES.has(user.role) && user.role !== VIEWER_ROLE : false;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <View style={styles.screen}>
+      <PendingSyncBanner />
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.farmId}>{detection.farmId}</Text>
       <Text style={styles.location}>
         {detection.barangay}, {detection.municipality}, {detection.province}
@@ -160,7 +163,8 @@ export default function FarmInspectionScreen({ route }: Props) {
 
       {actionError && <Text style={styles.errorText}>{actionError}</Text>}
       {isDecided && <Text style={styles.decidedNote}>This detection has already been decided.</Text>}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -196,6 +200,10 @@ function ActionButton({
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+  },
   container: {
     flex: 1,
     backgroundColor: "#F8FAFC",

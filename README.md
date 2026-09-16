@@ -184,7 +184,7 @@ npm test
 | 3. Automated Detection (NDVI/NDWI, damage scoring) | ✅ Done |
 | 4. Government Verification | ✅ Done |
 | 5. Analytics | ✅ Done |
-| 6. Mobile (field evidence capture) | 🟡 Core flow done, offline sync pending |
+| 6. Mobile (field evidence capture) | ✅ Done |
 | 7. Machine Learning | ⬜ Not started, needs validated real-world detections first |
 
 Full detail on what's built and what's deliberately deferred lives in [`docs/phases.md`](docs/phases.md).
@@ -194,8 +194,7 @@ Full detail on what's built and what's deliberately deferred lives in [`docs/pha
 Contributions on any of these are very welcome:
 
 - **Per-layer real imagery** — false color, NDVI, water, and damage-mask layers currently still use a generated illustration; only the true-color layer renders a real Copernicus image today
-- **Mobile offline support** — background sync and local queuing for field evidence submitted without connectivity
-- **Marker clustering & polygons on the mobile map** — currently web-only
+- **True background sync on mobile** — queued field evidence currently uploads once the app is foregrounded and online, not via a background task while the app is fully closed
 - **Machine learning detection model** — `geospatial/models` is scaffolded for this once enough verified detections exist to train on
 - **Real cadastral farm boundaries** — boundaries are currently generated to roughly match each farm's stated area rather than sourced from an actual land registry
 - **Object storage for media** — field evidence photos and satellite renders currently live on local disk in development; swap in S3/GCS-compatible storage for production

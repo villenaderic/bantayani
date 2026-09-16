@@ -7,14 +7,15 @@ Mobile app for government field officers, built with Expo, React Native, and Typ
 - Sign in against the same backend and JWT auth as the web dashboard
 - Bottom tab navigation with a Dashboard tab and a Live Map tab
 - Dashboard with live stats (active incidents, critical count, potential and verified damage) and a severity sorted list of detections
-- Live Map: a WebView running Leaflet with OpenStreetMap tiles, the same approach as the web app, so no Google Maps or Mapbox API key is needed. Severity colored markers, tap one to open that farm's inspection screen
+- Live Map: a WebView running Leaflet with OpenStreetMap tiles, the same approach as the web app, so no Google Maps or Mapbox API key is needed. Clustered markers at country/region scale and real farm boundary polygons once zoomed in past street level, matching the same zoom threshold and severity color palette as the web app's map. Tap a marker, cluster, or polygon to open that farm's inspection screen
 - Farm inspection screen with the same verify, reject, and field validation actions as the web app, gated by the same role rules (a viewer account cannot act here either)
+- Field evidence capture: take a photo (or pick one from the library), capture GPS automatically, add a note, and submit it, visible on the web app's read only field evidence display
+- Offline support for field evidence: if a submission can't reach the backend right now, it's saved to the device (photo included) and queued rather than lost. The queue flushes automatically the moment the device regains connectivity, and a banner with a "tap to sync now" affordance shows how many submissions are still waiting
 
 ## What's not here yet
 
-- No offline support or background sync. Every screen requires a live connection to the backend right now
-- No photo evidence capture for field validation
-- The map has no clustering or farm boundary polygons yet, unlike the web app's map, it is markers only for now
+- No offline caching of the dashboard or detection list themselves, only field evidence submission is queue-and-retry; viewing data still needs a live connection
+- No background sync while the app is closed, queued evidence uploads when the app is open and connectivity returns, not via a background task
 
 ## Running it
 

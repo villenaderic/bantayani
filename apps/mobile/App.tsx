@@ -5,6 +5,8 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
+import { SyncProvider } from "./src/context/SyncContext";
+import PendingSyncBanner from "./src/components/PendingSyncBanner";
 import LoginScreen from "./src/screens/LoginScreen";
 import DashboardScreen from "./src/screens/DashboardScreen";
 import MapScreen from "./src/screens/MapScreen";
@@ -26,10 +28,13 @@ const Tab = createBottomTabNavigator<TabParamList>();
 
 function MainTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Map" component={MapScreen} options={{ title: "Live Map" }} />
-    </Tab.Navigator>
+    <View style={styles.tabsContainer}>
+      <PendingSyncBanner />
+      <Tab.Navigator screenOptions={{ headerShown: false }}>
+        <Tab.Screen name="Dashboard" component={DashboardScreen} />
+        <Tab.Screen name="Map" component={MapScreen} options={{ title: "Live Map" }} />
+      </Tab.Navigator>
+    </View>
   );
 }
 
@@ -66,10 +71,12 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NavigationContainer>
-          <RootNavigator />
-          <StatusBar style="auto" />
-        </NavigationContainer>
+        <SyncProvider>
+          <NavigationContainer>
+            <RootNavigator />
+            <StatusBar style="auto" />
+          </NavigationContainer>
+        </SyncProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
@@ -81,5 +88,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#F8FAFC",
+  },
+  tabsContainer: {
+    flex: 1,
   },
 });

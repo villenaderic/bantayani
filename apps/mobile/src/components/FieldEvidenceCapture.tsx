@@ -3,6 +3,8 @@ import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { submitFieldEvidence } from "../lib/api";
+import { enqueueEvidence, looksLikeConnectivityError } from "../lib/offlineQueue";
+import { useSync } from "../context/SyncContext";
 
 interface FieldEvidenceCaptureProps {
   detectionId: string;
@@ -22,6 +24,7 @@ export default function FieldEvidenceCapture({ detectionId, onSubmitted, onCance
   const [gps, setGps] = useState<GpsState>({ status: "idle" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { refreshPendingCount } = useSync();
 
   async function pickPhoto(source: "camera" | "library") {
     setError(null);
@@ -73,14 +76,30 @@ export default function FieldEvidenceCapture({ detectionId, onSubmitted, onCance
     if (!photoUri) return;
     setIsSubmitting(true);
     setError(null);
+    const evidence = {
+      notes: notes.trim() || undefined,
+      gpsLat: gps.status === "found" ? gps.lat : undefined,
+      gpsLng: gps.status === "found" ? gps.lng : undefined,
+    };
     try {
-      await submitFieldEvidence(detectionId, photoUri, {
-        notes: notes.trim() || undefined,
-        gpsLat: gps.status === "found" ? gps.lat : undefined,
-        gpsLng: gps.status === "found" ? gps.lng : undefined,
-      });
+      await submitFieldEvidence(detectionId, photoUri, evidence);
       onSubmitted();
     } catch (err) {
+      if (looksLikeConnectivityError(err)) {
+        // No connection right now, save it on the device instead of
+        // losing the photo and GPS fix, it will upload automatically
+        // once the app is back online, or when the officer taps "Sync
+        // now" on the pending evidence banner.
+        try {
+          await enqueueEvidence({ detectionId, photoUri, ...evidence });
+          await refreshPendingCount();
+          onSubmitted();
+          return;
+        } catch (queueErr) {
+          setError(queueErr instanceof Error ? queueErr.message : "Could not save this evidence for later.");
+          return;
+        }
+      }
       setError(err instanceof Error ? err.message : "Failed to submit field evidence.");
     } finally {
       setIsSubmitting(false);
